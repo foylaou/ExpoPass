@@ -4,7 +4,13 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import swaggerUi from 'swagger-ui-express';
+import { useExpressServer } from 'routing-controllers';
+import { Container } from 'typedi';
+import { useContainer } from 'routing-controllers';
 import { initializeDatabase } from './config/data-source';
+import { swaggerSpec } from './config/swagger';
+import { EventController } from './controllers/EventController';
 
 // 載入環境變數
 dotenv.config();
@@ -21,6 +27,23 @@ app.use(cors({
 app.use(morgan('combined')); // 日誌
 app.use(express.json()); // 解析 JSON
 app.use(express.urlencoded({ extended: true })); // 解析 URL-encoded
+
+// Swagger API 文檔
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'ExpoPass API Documentation'
+}));
+
+// 設定依賴注入容器
+useContainer(Container);
+
+// 設定 routing-controllers
+useExpressServer(app, {
+  controllers: [EventController],
+  defaultErrorHandler: false,
+  validation: true,
+  classTransformer: true,
+});
 
 // 健康檢查路由
 app.get('/health', (req: Request, res: Response) => {
@@ -42,6 +65,7 @@ app.get('/api', (req: Request, res: Response) => {
             attendees: '/api/attendees',
             booths: '/api/booths',
             scans: '/api/scans',
+            docs: '/api-docs'
         },
     });
 });
@@ -78,6 +102,7 @@ const startServer = async () => {
       console.log(`🚀 Server is running on http://localhost:${PORT}`);
       console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
       console.log(`🏥 Health check: http://localhost:${PORT}/health`);
+      console.log(`📜 API Documentation: http://localhost:${PORT}/api-docs`);
       console.log(`🌐 CORS enabled for: ${process.env.CORS_ORIGIN || 'http://localhost:5173'}`);
     });
   } catch (error) {
