@@ -4,7 +4,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
-import { initializeDatabase } from './config/database';
+import { initializeDatabase } from './config/data-source';
 
 // 載入環境變數
 dotenv.config();
@@ -66,9 +66,13 @@ app.use((err: Error, req: Request, res: Response, next: any) => {
 // 啟動伺服器
 const startServer = async () => {
   try {
-    // 初始化資料庫連接
-    await initializeDatabase();
-    
+    // 如果設定 SKIP_DB=true 則跳過資料庫連接
+    if (process.env.SKIP_DB !== 'true') {
+      await initializeDatabase();
+    } else {
+      console.log('⚠️ Database connection skipped (SKIP_DB=true)');
+    }
+
     // 啟動伺服器
     app.listen(PORT, () => {
       console.log(`🚀 Server is running on http://localhost:${PORT}`);
