@@ -7,6 +7,10 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
+    "typeorm": "tsx node_modules/typeorm/cli.js",
+    "migration:generate": "npm run typeorm -- migration:generate",
+    "migration:run": "npm run typeorm -- migration:run",
+    "migration:revert": "npm run typeorm -- migration:revert",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -22,6 +26,8 @@
     "morgan": "^1.10.1",
     "pg": "^8.16.3",
     "qrcode": "^1.5.4",
+    "reflect-metadata": "^0.2.2",
+    "typeorm": "^0.3.27",
     "uuid": "^13.0.0"
   },
   "devDependencies": {

@@ -1,8 +1,10 @@
+import 'reflect-metadata';
 import express, { Application, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import { initializeDatabase } from './config/database';
 
 // 載入環境變數
 dotenv.config();
@@ -12,8 +14,11 @@ const PORT = process.env.PORT || 3000;
 
 // 中介層
 app.use(helmet()); // 安全性
-app.use(cors()); // 跨域請求
-app.use(morgan('dev')); // 日誌
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  credentials: true
+})); // 跨域請求
+app.use(morgan('combined')); // 日誌
 app.use(express.json()); // 解析 JSON
 app.use(express.urlencoded({ extended: true })); // 解析 URL-encoded
 
@@ -59,10 +64,35 @@ app.use((err: Error, req: Request, res: Response, next: any) => {
 });
 
 // 啟動伺服器
-app.listen(PORT, () => {
-    console.log(`🚀 Server is running on http://localhost:${PORT}`);
-    console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`🏥 Health check: http://localhost:${PORT}/health`);
+const startServer = async () => {
+  try {
+    // 初始化資料庫連接
+    await initializeDatabase();
+    
+    // 啟動伺服器
+    app.listen(PORT, () => {
+      console.log(`🚀 Server is running on http://localhost:${PORT}`);
+      console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`🏥 Health check: http://localhost:${PORT}/health`);
+      console.log(`🌐 CORS enabled for: ${process.env.CORS_ORIGIN || 'http://localhost:5173'}`);
+    });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+startServer();
+
+// 優雅關閉處理
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received. Shutting down gracefully...');
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT received. Shutting down gracefully...');
+  process.exit(0);
 });
 
 export default app;
