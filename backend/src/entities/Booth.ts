@@ -6,10 +6,10 @@ import { ScanRecord } from './ScanRecord';
 @Unique(['eventId', 'boothNumber'])
 export class Booth {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
-  @Column({ name: 'event_id' })
-  eventId: string;
+  @Column({ name: 'event_id', type: 'uuid' })
+  eventId!: string;
 
   @Column({ name: 'booth_number', length: 50 })
   boothNumber: string;

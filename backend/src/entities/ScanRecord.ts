@@ -6,16 +6,16 @@ import { Booth } from './Booth';
 @Entity('scan_records')
 export class ScanRecord {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
-  @Column({ name: 'attendee_id' })
-  attendeeId: string;
+  @Column({ name: 'attendee_id', type: 'uuid' })
+  attendeeId!: string;
 
-  @Column({ name: 'booth_id' })
-  boothId: string;
+  @Column({ name: 'booth_id', type: 'uuid' })
+  boothId!: string;
 
-  @Column({ name: 'event_id' })
-  eventId: string;
+  @Column({ name: 'event_id', type: 'uuid' })
+  eventId!: string;
 
   @CreateDateColumn({ name: 'scanned_at' })
   scannedAt: Date;

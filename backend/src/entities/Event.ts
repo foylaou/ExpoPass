@@ -12,7 +12,7 @@ export enum EventStatus {
 @Entity('events')
 export class Event {
   @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
   @Column({ name: 'event_name', length: 200 })
   eventName: string;
