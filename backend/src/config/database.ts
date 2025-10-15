@@ -6,25 +6,32 @@ export const AppDataSource = new DataSource({
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '5432'),
   username: process.env.DB_USERNAME || 'postgres',
-  password: process.env.DB_PASSWORD || '',
+  password: process.env.DB_PASSWORD ? String(process.env.DB_PASSWORD) : '',
   database: process.env.DB_NAME || 'expo_pass',
-  synchronize: process.env.NODE_ENV !== 'production', // 生產環境中應設為 false
+  synchronize: false, // 使用現有資料表，不自動同步
   logging: process.env.NODE_ENV === 'development',
   entities: [Event, Attendee, Booth, ScanRecord],
   migrations: ['src/migrations/*.ts'],
   subscribers: ['src/subscribers/*.ts'],
+  extra: {
+    // 嘗試使用不同的 SSL 和認證設定
+    ssl: false,
+    connectionLimit: 10,
+  },
 });
 
 export const initializeDatabase = async () => {
   try {
+    console.log('🔌 Attempting database connection with:');
+    console.log(`  Host: ${process.env.DB_HOST || 'localhost'}`);
+    console.log(`  Port: ${process.env.DB_PORT || '5432'}`);
+    console.log(`  Username: ${process.env.DB_USERNAME || 'postgres'}`);
+    console.log(`  Database: ${process.env.DB_NAME || 'expo_pass'}`);
+    console.log(`  Password length: ${(process.env.DB_PASSWORD || '').length}`);
+    
     await AppDataSource.initialize();
     console.log('✅ Database connection established successfully');
-    
-    // 在開發環境中同步資料庫結構
-    if (process.env.NODE_ENV === 'development') {
-      await AppDataSource.synchronize();
-      console.log('✅ Database schema synchronized');
-    }
+    console.log('📄 Using existing database schema (synchronize: false)');
   } catch (error) {
     console.error('❌ Error during database initialization:', error);
     throw error;
