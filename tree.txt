@@ -1,0 +1,128 @@
+ExpoPass/
+├── backend/                          # 後端 API (Node.js + Express)
+│   ├── src/
+│   │   ├── config/
+│   │   │   ├── database.js          # PostgreSQL 連線設定
+│   │   │   └── env.js               # 環境變數管理
+│   │   ├── controllers/             # 控制器層
+│   │   │   ├── eventController.js
+│   │   │   ├── attendeeController.js
+│   │   │   ├── boothController.js
+│   │   │   └── scanController.js
+│   │   ├── models/                  # 資料模型層
+│   │   │   ├── Event.js
+│   │   │   ├── Attendee.js
+│   │   │   ├── Booth.js
+│   │   │   └── ScanRecord.js
+│   │   ├── routes/                  # 路由定義
+│   │   │   ├── eventRoutes.js
+│   │   │   ├── attendeeRoutes.js
+│   │   │   ├── boothRoutes.js
+│   │   │   ├── scanRoutes.js
+│   │   │   └── authRoutes.js
+│   │   ├── middleware/              # 中介層
+│   │   │   ├── authMiddleware.js    # QR Token 驗證
+│   │   │   ├── errorHandler.js      # 錯誤處理
+│   │   │   └── validation.js        # 資料驗證
+│   │   ├── utils/                   # 工具函數
+│   │   │   ├── qrCodeGenerator.js   # QR Code 生成
+│   │   │   ├── tokenGenerator.js    # Token 生成
+│   │   │   └── logger.js            # 日誌記錄
+│   │   ├── services/                # 業務邏輯層
+│   │   │   ├── eventService.js
+│   │   │   ├── attendeeService.js
+│   │   │   ├── boothService.js
+│   │   │   └── scanService.js
+│   │   └── app.js                   # Express 應用主程式
+│   ├── database/
+│   │   ├── migrations/              # 資料庫遷移
+│   │   │   └── 001_initial_schema.sql
+│   │   └── seeds/                   # 測試資料
+│   │       └── dev_seed.sql
+│   ├── tests/                       # 測試檔案
+│   │   ├── unit/
+│   │   └── integration/
+│   ├── .env.example                 # 環境變數範例
+│   ├── .gitignore
+│   ├── package.json
+│   ├── package-lock.json
+│   └── server.js                    # 伺服器入口
+│
+├── frontend/                         # 前端 PWA (Vite + React)
+│   ├── public/
+│   │   ├── icons/                   # PWA 圖示
+│   │   │   ├── icon-72x72.png
+│   │   │   ├── icon-96x96.png
+│   │   │   ├── icon-128x128.png
+│   │   │   ├── icon-144x144.png
+│   │   │   ├── icon-152x152.png
+│   │   │   ├── icon-192x192.png
+│   │   │   ├── icon-384x384.png
+│   │   │   └── icon-512x512.png
+│   │   ├── manifest.json            # PWA manifest
+│   │   └── robots.txt
+│   ├── src/
+│   │   ├── api/                     # API 請求封裝
+│   │   │   ├── client.js            # Axios 設定
+│   │   │   ├── eventApi.js
+│   │   │   ├── attendeeApi.js
+│   │   │   ├── boothApi.js
+│   │   │   └── scanApi.js
+│   │   ├── assets/                  # 靜態資源
+│   │   │   ├── images/
+│   │   │   └── styles/
+│   │   │       └── globals.css
+│   │   ├── components/              # 共用元件
+│   │   │   ├── common/
+│   │   │   │   ├── Header.jsx
+│   │   │   │   ├── Footer.jsx
+│   │   │   │   ├── Loading.jsx
+│   │   │   │   └── ErrorBoundary.jsx
+│   │   │   ├── QRCode/
+│   │   │   │   ├── QRCodeDisplay.jsx    # 顯示 QR Code
+│   │   │   │   └── QRCodeScanner.jsx    # 掃描 QR Code
+│   │   │   ├── Badge/
+│   │   │   │   ├── BadgeCard.jsx        # 名牌卡片
+│   │   │   │   └── BadgeInfo.jsx        # 名牌資訊
+│   │   │   └── Scan/
+│   │   │       ├── ScanResult.jsx       # 掃描結果
+│   │   │       └── ScanHistory.jsx      # 掃描歷史
+│   │   ├── pages/                   # 頁面元件
+│   │   │   ├── HomePage.jsx         # 首頁（QR 登入）
+│   │   │   ├── BadgePage.jsx        # 參展人員名牌頁
+│   │   │   ├── ScannerPage.jsx      # 攤位掃描頁
+│   │   │   ├── AnalyticsPage.jsx    # 數據分析頁
+│   │   │   └── NotFoundPage.jsx     # 404 頁面
+│   │   ├── hooks/                   # 自定義 Hooks
+│   │   │   ├── useAuth.js           # 驗證狀態
+│   │   │   ├── useScanner.js        # 掃描功能
+│   │   │   └── useOffline.js        # 離線狀態
+│   │   ├── context/                 # React Context
+│   │   │   ├── AuthContext.jsx
+│   │   │   └── ThemeContext.jsx
+│   │   ├── utils/                   # 工具函數
+│   │   │   ├── storage.js           # LocalStorage 封裝
+│   │   │   ├── validator.js         # 表單驗證
+│   │   │   └── formatter.js         # 格式化工具
+│   │   ├── sw.js                    # Service Worker
+│   │   ├── App.jsx                  # 主應用元件
+│   │   ├── main.jsx                 # 應用入口
+│   │   └── router.jsx               # 路由配置
+│   ├── .env.example
+│   ├── .gitignore
+│   ├── index.html
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── vite.config.js               # Vite 配置
+│   ├── tailwind.config.js           # Tailwind CSS 配置
+│   └── postcss.config.js            # PostCSS 配置
+│
+├── docs/                             # 文檔
+│   ├── API.md                       # API 文檔
+│   ├── DEPLOYMENT.md                # 部署指南
+│   └── USER_GUIDE.md                # 使用手冊
+│
+├── .gitignore
+├── README.md                        # 專案說明
+├── docker-compose.yml               # Docker 編排（選用）
+└── package.json                     # Monorepo 根配置（選用）
