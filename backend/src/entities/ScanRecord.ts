@@ -18,7 +18,7 @@ export class ScanRecord {
   eventId!: string;
 
   @CreateDateColumn({ name: 'scanned_at' })
-  scannedAt: Date;
+  scannedAt!: Date;
 
   @Column({ type: 'text', nullable: true })
   notes?: string;
@@ -26,13 +26,13 @@ export class ScanRecord {
   // Relations
   @ManyToOne(() => Attendee, attendee => attendee.scanRecords, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'attendee_id' })
-  attendee: Attendee;
+  attendee!: Attendee;
 
   @ManyToOne(() => Booth, booth => booth.scanRecords, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'booth_id' })
-  booth: Booth;
+  booth!: Booth;
 
   @ManyToOne(() => Event, event => event.scanRecords, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'event_id' })
-  event: Event;
+  event!: Event;
 }

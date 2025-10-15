@@ -14,19 +14,19 @@ export class Event {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column({ name: 'event_name', length: 200 })
-  eventName: string;
+  @Column({ name: 'event_name', type: 'varchar', length: 200 })
+  eventName!: string;
 
-  @Column({ name: 'event_code', length: 50, unique: true })
-  eventCode: string;
+  @Column({ name: 'event_code', type: 'varchar', length: 50, unique: true })
+  eventCode!: string;
 
   @Column({ name: 'start_date', type: 'date' })
-  startDate: Date;
+  startDate!: Date;
 
   @Column({ name: 'end_date', type: 'date' })
-  endDate: Date;
+  endDate!: Date;
 
-  @Column({ length: 300, nullable: true })
+  @Column({ type: 'varchar', length: 300, nullable: true })
   location?: string;
 
   @Column({ type: 'text', nullable: true })
@@ -37,21 +37,21 @@ export class Event {
     enum: EventStatus,
     default: EventStatus.UPCOMING
   })
-  status: EventStatus;
+  status!: EventStatus;
 
   @CreateDateColumn({ name: 'created_at' })
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn({ name: 'updated_at' })
-  updatedAt: Date;
+  updatedAt!: Date;
 
   // Relations
   @OneToMany(() => Attendee, attendee => attendee.event)
-  attendees: Attendee[];
+  attendees!: Attendee[];
 
   @OneToMany(() => Booth, booth => booth.event)
-  booths: Booth[];
+  booths!: Booth[];
 
   @OneToMany(() => ScanRecord, scanRecord => scanRecord.event)
-  scanRecords: ScanRecord[];
+  scanRecords!: ScanRecord[];
 }
