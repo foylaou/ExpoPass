@@ -1,17 +1,11 @@
-import { Service } from 'typedi';
 import { Repository } from 'typeorm';
 import { AppDataSource } from '../config/data-source';
-import { Event } from '../entities/Event';
+import { Event } from '../entities';
 import { CreateEventDto, UpdateEventDto } from '../dto/EventDto';
 
-@Service()
 export class EventService {
-  private eventRepository: Repository<Event>;
+  private eventRepository: Repository<Event> | null = null;
 
-  constructor() {
-    // 延遲初始化以確保 AppDataSource 已連接
-    this.eventRepository = AppDataSource.getRepository(Event);
-  }
 
   private get repository(): Repository<Event> {
     if (!this.eventRepository || !AppDataSource.isInitialized) {
@@ -44,7 +38,7 @@ export class EventService {
       startDate: new Date(createEventDto.startDate),
       endDate: new Date(createEventDto.endDate),
     });
-    
+
     return await this.repository.save(event);
   }
 
@@ -55,11 +49,11 @@ export class EventService {
     }
 
     const updateData: any = { ...updateEventDto };
-    
+
     if (updateEventDto.startDate) {
       updateData.startDate = new Date(updateEventDto.startDate);
     }
-    
+
     if (updateEventDto.endDate) {
       updateData.endDate = new Date(updateEventDto.endDate);
     }

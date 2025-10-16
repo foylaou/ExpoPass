@@ -13,7 +13,7 @@ import {
 import { Service } from 'typedi';
 import { EventService } from '../services/EventService';
 import { CreateEventDto, UpdateEventDto } from '../dto/EventDto';
-import { Event } from '../entities/Event';
+import { Event } from '../entities';
 
 /**
  * @swagger
@@ -21,6 +21,7 @@ import { Event } from '../entities/Event';
  *   name: Events
  *   description: 展覽活動管理
  */
+@Service()
 @JsonController('/api/events')
 export class EventController {
   private eventService: EventService;

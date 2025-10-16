@@ -11,6 +11,7 @@ import { useContainer } from 'routing-controllers';
 import { initializeDatabase } from './config/data-source';
 import { swaggerSpec } from './config/swagger';
 import { EventController } from './controllers/EventController';
+import { EventService } from './services/EventService';
 
 // 載入環境變數
 dotenv.config();
@@ -72,19 +73,23 @@ app.get('/api', (req: Request, res: Response) => {
 
 // 404 處理
 app.use((req: Request, res: Response) => {
-    res.status(404).json({
-        error: 'Not Found',
-        message: `Route ${req.url} not found`,
-    });
+    if (!res.headersSent) {
+        res.status(404).json({
+            error: 'Not Found',
+            message: `Route ${req.url} not found`,
+        });
+    }
 });
 
 // 錯誤處理
 app.use((err: Error, req: Request, res: Response, next: any) => {
-    console.error(err.stack);
-    res.status(500).json({
-        error: 'Internal Server Error',
-        message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong',
-    });
+    if (!res.headersSent) {
+        console.error(err.stack);
+        res.status(500).json({
+            error: 'Internal Server Error',
+            message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong',
+        });
+    }
 });
 
 // 啟動伺服器
