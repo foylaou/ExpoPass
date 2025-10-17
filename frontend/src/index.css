@@ -1,2 +1,484 @@
 @import "tailwindcss";
 @plugin "daisyui";
+
+/* ISHALight 主題 */
+@plugin "daisyui/theme" {
+    name: ISHALight;
+    default: true;
+    prefersdark: false;
+    color-scheme: light;
+
+    /* 基本顏色 */
+    --color-primary: #4062BB;
+    --color-primary-hover: #5f80d1;
+    --color-primary-content: #F3F3F1;
+    --color-secondary: #28B5AD;
+    --color-secondary-hover: #84d9d0;
+    --color-secondary-content: #fbfcfd;
+
+    --color-accent: #EA5404;
+    --color-accent-hover: #ffa371;
+    --color-accent-content: #FFFFFF;
+    --color-neutral: #000000;
+    --color-neutral-hover: #3a3a3a;
+    --color-neutral-content: #c9c7c7;
+    --color-footer-bg: #242C3A ;
+    /* 背景和內容顏色 */
+    --color-base-100: #F3F6FA;
+    --color-base-200: #FCFCFC;
+    --color-base-300: #c5d9fd;
+    --color-base-content: #292929;
+
+    /* 功能性顏色 */
+    --color-info: #76d5ff;
+    --color-info-content: #234241;
+    --color-success: #7DB9DE;
+    --color-success-content: #00140e;
+    --color-warning: #FFC408;
+    --color-warning-content: #00140e;
+    --color-error: #bc3c34;
+    --color-error-content: #FFFFFF;
+
+
+    --radius-selector: 0.5rem;
+    --radius-field: 0.5rem;
+    --radius-box: 0.5rem;
+    --size-selector: 0.3125rem;
+    --size-field: 0.3125rem;
+    --border: 1px;
+    --depth: 1;
+    --noise: 1;
+}
+
+/* ISHADark 主題 */
+@plugin "daisyui/theme" {
+    name: ISHADark;
+    prefersdark: true;
+    color-scheme: dark;
+
+    /* 基本顏色 */
+    --color-primary: #4062BB;
+    --color-primary-content: #F3F3F1;
+    --color-secondary: #1A7A75;
+    --color-secondary-content: #EBF2FA;
+    --color-accent: #B34003;
+    --color-accent-content: #FFFFFF;
+    --color-neutral: #414e6c;
+    --color-neutral-content: #cccccc;
+    --color-footer-bg: #242C3A ;
+    /* 背景和內容顏色 */
+    --color-base-100: #22262A;
+    --color-base-200: #404040;
+    --color-base-300: #8a8a8a;
+    --color-base-content: #ffffff;
+
+    /* 功能性顏色 */
+    --color-info: #2B4748;
+    --color-info-content: #C5E7E8;
+    --color-success: #578cab;
+    --color-success-content: #7DB9DE;
+    --color-warning: #8C6B00;
+    --color-warning-content: #FFC408;
+    --color-error: #ff0000;
+    --color-error-content: #FFFFFF;
+
+
+    --radius-selector: 0.5rem;
+    --radius-field: 0.5rem;
+    --radius-box: 0.5rem;
+    --size-selector: 0.3125rem;
+    --size-field: 0.3125rem;
+    --border: 1px;
+    --depth: 1;
+    --noise: 1;
+}
+
+
+[data-theme="ISHALight"] {
+    .footer-bg {
+        background-color: #242C3A;
+    }
+    .label-text{
+        color: var(--color-base-content);
+    }
+}
+[data-theme="ISHADark"] {
+    .footer-bg {
+        background-color: #242C3A;
+    }
+    .label-text{
+        color: var(--color-base-content);
+    }
+}
+/* 根元素變數設定 */
+:root {
+    --background: #ffffff;
+    --foreground: #171717;
+    --ag-charts-font-size: 0.75rem; /* 12px / 16px = 0.75rem */
+    --footer-bg: #242C3A;
+    --light-primary-hover: #5f80d1;
+}
+/* 在您的全局 CSS 文件中添加以下規則 (global.css) */
+
+/*==================================
+  選擇器本身的樣式
+==================================*/
+/* 選擇器背景和邊框 */
+.ant-select.ant-tree-select .ant-select-selector {
+    background-color: var(--color-base-100) !important;
+    border-color: var(--color-base-300) !important;
+}
+
+/* 選擇器內文字顏色 */
+.ant-select.ant-tree-select .ant-select-selection-item,
+.ant-select.ant-tree-select .ant-select-selection-placeholder {
+    color: var(--color-base-content) !important;
+}
+
+/* 選擇器箭頭顏色 */
+.ant-select.ant-tree-select .ant-select-arrow {
+    color: var(--color-base-content) !important;
+}
+
+/* 選擇器懸停狀態 */
+.ant-select.ant-tree-select:not(.ant-select-disabled):hover .ant-select-selector {
+    border-color: var(--color-primary) !important;
+}
+
+/* 選擇器聚焦狀態 */
+.ant-select.ant-tree-select.ant-select-focused .ant-select-selector {
+    border-color: var(--color-primary) !important;
+    box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.2) !important;
+}
+
+/* 選擇器禁用狀態 */
+.ant-select.ant-tree-select.ant-select-disabled .ant-select-selector {
+    background-color: var(--color-base-200) !important;
+    color: var(--color-base-300) !important;
+}
+
+/*==================================
+  下拉選單的樣式
+==================================*/
+/* 下拉選單容器 */
+.ant-select-dropdown,
+.ant-tree-select-dropdown,
+div[class*="ant-tree-select-dropdown"],
+div[class*="css-dev-only-do-not-override"] {
+    background-color: var(--color-base-100) !important;
+}
+
+/* 下拉選單內部元素背景 */
+.ant-select-dropdown .ant-select-tree,
+.ant-tree-select-dropdown .ant-select-tree,
+.ant-select-dropdown .rc-virtual-list,
+.ant-tree-select-dropdown .rc-virtual-list {
+    background-color: var(--color-base-100) !important;
+}
+
+/* 樹節點的文字顏色 */
+.ant-select-tree-title,
+.ant-select-tree-node-content-wrapper {
+    color: var(--color-base-content) !important;
+}
+
+/* 樹節點懸停狀態 */
+.ant-select-tree-node-content-wrapper:hover {
+    background-color: var(--color-base-200) !important;
+}
+
+/* 樹節點選中狀態 */
+.ant-select-tree-node-selected,
+.ant-select-tree-node-content-wrapper.ant-select-tree-node-selected {
+    background-color: var(--color-primary) !important;
+}
+
+/* 選中節點的文字顏色 */
+.ant-select-tree-node-selected .ant-select-tree-title,
+.ant-select-tree-node-content-wrapper.ant-select-tree-node-selected .ant-select-tree-title {
+    color: var(--color-primary-content) !important;
+}
+
+/* 搜索框背景和文字 */
+.ant-select-tree-list-holder-inner .ant-select-tree-node-content-wrapper {
+    color: var(--color-base-content) !important;
+}
+
+/* 針對特定的自動生成類名 */
+div[class*="css-dev-only-do-not-override"] * {
+
+    color: var(--color-base-content) !important;
+}
+
+
+div[class*="css-dev-only-do-not-override"] .ant-select-tree-node-selected {
+    background-color: var(--color-primary) !important;
+}
+
+div[class*="css-dev-only-do-not-override"] .ant-select-tree-node-selected .ant-select-tree-title {
+    color: var(--color-primary-content) !important;
+}
+
+/* 針對 Ant Design 4.x 的下拉菜單 */
+.ant-select-dropdown-placement-bottomLeft,
+.ant-select-dropdown-placement-bottomRight,
+.ant-select-dropdown-placement-topLeft,
+.ant-select-dropdown-placement-topRight {
+    background-color: var(--color-base-100) !important;
+}
+
+/* 下拉框陰影 */
+.ant-select-dropdown {
+    box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.12),
+    0 6px 16px 0 rgba(0, 0, 0, 0.08),
+    0 9px 28px 8px rgba(0, 0, 0, 0.05) !important;
+}
+
+/*==================================
+  主題特定樣式
+==================================*/
+/* 淺色主題特定調整 */
+[data-theme="ISHALight"] .ant-select-dropdown,
+[data-theme="ISHALight"] .ant-tree-select-dropdown {
+    /* 淺色主題特定樣式（如有需要） */
+    border: 1px solid var(--color-base-300, #c5d9fd) !important;
+}
+
+/* 深色主題特定調整 */
+[data-theme="ISHADark"] .ant-select-dropdown,
+[data-theme="ISHADark"] .ant-tree-select-dropdown {
+    /* 深色主題特定樣式（如有需要） */
+    border: 1px solid var(--color-base-300, #8a8a8a) !important;
+}
+
+/* RGB 變數用於透明度計算 */
+:root {
+    --color-primary-rgb: 64, 98, 187; /* 對應 #4062BB */
+}
+
+
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --background: #0a0a0a;
+        --foreground: #ededed;
+    }
+}
+
+body {
+    color: var(--foreground);
+    background: var(--background);
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+/* 專注狀態樣式 */
+*:focus:not(:focus-visible) {
+    outline: none;
+}
+
+:focus-visible {
+    outline-style: dashed !important;
+    outline-color: #f4a261 !important;
+    animation: outlineGrow 0.1s ease-out forwards !important;
+}
+
+@keyframes outlineGrow {
+    0% {
+        outline-width: 1px;
+        outline-offset: 1px;
+    }
+    100% {
+        outline-width: 4px;
+        outline-offset: 4px;
+    }
+}
+
+/* 跳轉鏈接樣式 */
+a[accessKey="c"],
+a[accessKey="u"],
+a[accessKey="z"],
+a[accessKey="l"] {
+    color: transparent;
+}
+
+a[accessKey="c"]:focus,
+a[accessKey="c"]:hover,
+a[accessKey="u"]:focus,
+a[accessKey="u"]:hover,
+a[accessKey="z"]:focus,
+a[accessKey="z"]:hover,
+a[accessKey="l"]:focus,
+a[accessKey="l"]:hover {
+    color: var(--base-content);
+    background-color: var(--base-100);
+}
+
+.skip-link-hidden {
+    color: transparent;
+    transition: color 0.2s ease;
+}
+
+.skip-link-hidden:focus,
+.skip-link-hidden:hover {
+    color: var(--base-content);
+    background-color: var(--base-100);
+}
+
+/* 通知容器樣式 */
+.Toastify__toast-container--top-right {
+    top: 100px !important;
+    right: 20px !important;
+}
+
+/* 較小屏幕通知樣式 */
+@media only screen and (max-width: 480px) {
+    .Toastify__toast-container--top-right {
+        top: 80px !important;
+        left: 16px !important;
+        right: 16px !important;
+    }
+}
+
+/* 日期範圍選擇器樣式 */
+.date-range-wrapper.dark-mode {
+    --bg-primary: #1f2937;
+    --bg-secondary: #111827;
+    --bg-hover: #374151;
+    --text-primary: #f3f4f6;
+    --text-secondary: #d1d5db;
+    --text-muted: #9ca3af;
+    --border-color: #4b5563;
+    --selection-bg: #3b82f6;
+    --selection-text: #ffffff;
+    --today-highlight: #10b981;
+    --disabled-color: #6b7280;
+    --range-bg: rgba(59, 130, 246, 0.2);
+}
+
+.date-range-wrapper.light-mode {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f3f4f6;
+    --bg-hover: #e5e7eb;
+    --text-primary: #111827;
+    --text-secondary: #374151;
+    --text-muted: #6b7280;
+    --border-color: #d1d5db;
+    --selection-bg: #7294ca;
+    --selection-text: #ffffff;
+    --today-highlight: #10b981;
+    --disabled-color: #9ca3af;
+    --range-bg: rgba(114, 148, 202, 0.2);
+}
+
+/* 日期範圍選擇器黑暗模式樣式 */
+.date-range-dark .rdrCalendarWrapper {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.date-range-dark .rdrMonthAndYearWrapper {
+    background-color: var(--bg-secondary);
+}
+
+.date-range-dark .rdrMonthAndYearPickers select {
+    color: var(--text-primary);
+    background-color: var(--bg-secondary);
+}
+
+.date-range-dark .rdrMonthAndYearPickers select:hover {
+    background-color: var(--bg-hover);
+}
+
+.date-range-dark .rdrNextPrevButton {
+    background-color: var(--bg-hover);
+}
+
+.date-range-dark .rdrNextPrevButton:hover {
+    background-color: var(--bg-secondary);
+}
+
+.date-range-dark .rdrNextPrevButton i {
+    border-color: var(--text-primary);
+}
+
+.date-range-dark .rdrMonth {
+    background-color: var(--bg-primary);
+}
+
+.date-range-dark .rdrMonthName {
+    color: var(--text-secondary);
+}
+
+.date-range-dark .rdrWeekDay {
+    color: var(--text-muted);
+}
+
+.date-range-dark .rdrDay {
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+}
+
+.date-range-dark .rdrDayNumber span {
+    color: var(--text-primary);
+}
+
+.date-range-dark .rdrDayDisabled .rdrDayNumber span {
+    color: var(--disabled-color);
+}
+
+.date-range-dark .rdrDayToday .rdrDayNumber span:after {
+    background: var(--today-highlight);
+}
+
+.date-range-dark .rdrStartEdge,
+.date-range-dark .rdrEndEdge,
+.date-range-dark .rdrInRange {
+    background-color: var(--range-bg);
+}
+
+.date-range-dark .rdrDayStartPreview,
+.date-range-dark .rdrDayEndPreview,
+.date-range-dark .rdrDayInPreview {
+    border-color: var(--selection-bg);
+    color: var(--selection-text);
+}
+
+.date-range-dark .rdrSelected {
+    background-color: var(--selection-bg);
+    color: var(--selection-text);
+}
+
+.date-range-dark .rdrDateDisplayItem {
+    background-color: var(--bg-secondary);
+    border-color: var(--border-color);
+}
+
+.date-range-dark .rdrDateDisplayItem input {
+    color: var(--text-primary);
+}
+
+.date-range-dark .rdrDateDisplayItemActive {
+    border-color: var(--selection-bg);
+}
+
+.date-range-dark .rdrStartEdge,
+.date-range-dark .rdrEndEdge {
+    background-color: var(--selection-bg);
+    color: var(--selection-text);
+}
+
+.date-range-dark .rdrInRange {
+    background-color: var(--range-bg);
+    color: var(--text-primary);
+}
+
+.date-range-light .rdrCalendarWrapper {
+    background-color: var(--bg-primary);
+}
+
+@media (max-width: 640px) {
+    .date-range-dark .rdrCalendarWrapper,
+    .date-range-light .rdrCalendarWrapper {
+        font-size: 14px;
+    }
+}

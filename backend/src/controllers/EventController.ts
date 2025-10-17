@@ -11,6 +11,7 @@ import {
   BadRequestError,
 } from 'routing-controllers';
 import { Service } from 'typedi';
+//不能用index會循環依賴
 import { EventService } from '../services/EventService';
 import { CreateEventDto, UpdateEventDto } from '../dto/EventDto';
 import { Event } from '../entities';

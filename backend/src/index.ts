@@ -10,8 +10,18 @@ import { Container } from 'typedi';
 import { useContainer } from 'routing-controllers';
 import { initializeDatabase } from './config/data-source';
 import { swaggerSpec } from './config/swagger';
-import { EventController } from './controllers/EventController';
-import { EventService } from './services/EventService';
+import {
+    AttendeeController,
+    BoothController,
+    DashboardController,
+    EventController,
+    ImportExportController,
+    QRCodeController,
+    ReportController,
+    ScanController
+} from "./controllers";
+
+
 
 // 載入環境變數
 dotenv.config();
@@ -40,7 +50,16 @@ useContainer(Container);
 
 // 設定 routing-controllers
 useExpressServer(app, {
-  controllers: [EventController],
+  controllers: [
+      AttendeeController,
+      BoothController,
+      DashboardController,
+      EventController,
+      ImportExportController,
+      QRCodeController,
+      ReportController,
+      ScanController,
+  ],
   defaultErrorHandler: false,
   validation: true,
   classTransformer: true,
