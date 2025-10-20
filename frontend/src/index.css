@@ -1,5 +1,15 @@
 @import "tailwindcss";
-@plugin "daisyui";
+@import "tailwindcss/theme" {
+  --color-primary: #4062BB;
+  --color-primary-hover: #5f80d1;
+  --color-secondary: #28B5AD;
+  --color-accent: #EA5404;
+  --color-neutral: #000000;
+  --color-base-100: #F3F6FA;
+  --color-base-200: #FCFCFC;
+  --color-base-300: #c5d9fd;
+  --color-base-content: #292929;
+}
 
 /* ISHALight 主題 */
 @plugin "daisyui/theme" {
