@@ -81,8 +81,8 @@ export interface Alert {
 }
 
 // API 响应封装类型
-export interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  message?: string;
+export interface ApiResponse<T>{
+    success: boolean;
+    message: string;
+    data?: T
 }

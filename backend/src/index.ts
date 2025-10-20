@@ -80,13 +80,22 @@ app.get('/api', (req: Request, res: Response) => {
         message: 'Welcome to ExpoPass API',
         version: '1.0.0',
         endpoints: {
-            health: '/health',
+            health: '/api/health',
             events: '/api/events',
             attendees: '/api/attendees',
             booths: '/api/booths',
             scans: '/api/scans',
             docs: '/api-docs'
         },
+    });
+});
+
+// API健康檢查路由
+app.get('/api/health', (req: Request, res: Response) => {
+    res.json({
+        status: 'OK',
+        message: 'ExpoPass API is running',
+        timestamp: new Date().toISOString(),
     });
 });
 
