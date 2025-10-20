@@ -141,3 +141,5 @@ lib/
 # Temporary files
 tmp/
 temp/
+/frontend/dev-dist/sw.js
+/frontend/dev-dist/registerSW.js
