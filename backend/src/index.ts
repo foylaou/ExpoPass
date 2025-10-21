@@ -28,19 +28,21 @@ dotenv.config();
 
 const app: Application = express();
 const PORT = process.env.PORT || 3000;
-
+const ENV = process.env.NODE_ENV|| "development"
 // 中介層
 app.use(helmet()); // 安全性
+if(ENV=="development"){
 app.use(cors({
   origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
   credentials: true
 })); // 跨域請求
+}
 app.use(morgan('combined')); // 日誌
 app.use(express.json()); // 解析 JSON
 app.use(express.urlencoded({ extended: true })); // 解析 URL-encoded
 
 // Swagger API 文檔
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+app.use('/api/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customCss: '.swagger-ui .topbar { display: none }',
   customSiteTitle: 'ExpoPass API Documentation'
 }));
@@ -66,7 +68,7 @@ useExpressServer(app, {
 });
 
 // 健康檢查路由
-app.get('/health', (req: Request, res: Response) => {
+app.get('/api/health', (req: Request, res: Response) => {
     res.json({
         status: 'OK',
         message: 'ExpoPass API is running',
@@ -81,11 +83,18 @@ app.get('/api', (req: Request, res: Response) => {
         version: '1.0.0',
         endpoints: {
             health: '/api/health',
-            events: '/api/events',
+            docs: '/api/api-docs',
             attendees: '/api/attendees',
             booths: '/api/booths',
+            dashboard: '/api/dashboard',
+            events: '/api/events',
+            importExport:"/api/import-export",
+            QRCode:"/api/qrcode",
+            reports: '/api/reports',
             scans: '/api/scans',
-            docs: '/api-docs'
+            Auth: '/api/auth',
+
+
         },
     });
 });
@@ -134,8 +143,8 @@ const startServer = async () => {
     app.listen(PORT, () => {
       console.log(`🚀 Server is running on http://localhost:${PORT}`);
       console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`🏥 Health check: http://localhost:${PORT}/health`);
-      console.log(`📜 API Documentation: http://localhost:${PORT}/api-docs`);
+      console.log(`🏥 Health check: http://localhost:${PORT}/api/health`);
+      console.log(`📜 API Documentation: http://localhost:${PORT}/api/api-docs`);
       console.log(`🌐 CORS enabled for: ${process.env.CORS_ORIGIN || 'http://localhost:5173'}`);
     });
   } catch (error) {

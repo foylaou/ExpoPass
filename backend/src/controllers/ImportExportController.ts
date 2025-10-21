@@ -23,7 +23,7 @@ import { ImportExportService } from '../services/ImportExportService';
  *   description: 匯入匯出
  */
 @Service()
-@JsonController('/import-export')
+@JsonController('/api/import-export')
 export class ImportExportController {
     constructor(private importExportService: ImportExportService) {}
 

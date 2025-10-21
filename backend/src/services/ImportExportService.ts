@@ -1,28 +1,30 @@
 import { Service } from 'typedi';
 import { Repository } from 'typeorm';
-import { InjectRepository } from 'typeorm-typedi-extensions';
 import * as XLSX from 'xlsx';
 import { createObjectCsvWriter } from 'csv-writer';
 import { Response } from 'express';
 import { Event ,Attendee ,Booth ,ScanRecord,} from '../entities';
+import { AppDataSource } from '../config/data-source';
 import { AttendeeService ,BoothService } from './';
 import * as fs from 'fs';
 import * as path from 'path';
 
 @Service()
 export class ImportExportService {
+    private eventRepository: Repository<Event>;
+    private attendeeRepository: Repository<Attendee>;
+    private boothRepository: Repository<Booth>;
+    private scanRepository: Repository<ScanRecord>;
+    
     constructor(
-        @InjectRepository(Event)
-        private eventRepository: Repository<Event>,
-        @InjectRepository(Attendee)
-        private attendeeRepository: Repository<Attendee>,
-        @InjectRepository(Booth)
-        private boothRepository: Repository<Booth>,
-        @InjectRepository(ScanRecord)
-        private scanRepository: Repository<ScanRecord>,
         private attendeeService: AttendeeService,
         private boothService: BoothService
-    ) {}
+    ) {
+        this.eventRepository = AppDataSource.getRepository(Event);
+        this.attendeeRepository = AppDataSource.getRepository(Attendee);
+        this.boothRepository = AppDataSource.getRepository(Booth);
+        this.scanRepository = AppDataSource.getRepository(ScanRecord);
+    }
 
     /**
      * 匯入參展人員（Excel/CSV）

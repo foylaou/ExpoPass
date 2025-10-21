@@ -15,7 +15,7 @@ import {
     BadRequestError,
 } from 'routing-controllers';
 import { Service } from 'typedi';
-import { ScanService } from '../services/ScanService';
+import { ScanService } from '../services';
 import { CreateScanDto, ScanByTokenDto, UpdateScanDto } from '../dto/ScanDto';
 import { ScanRecord } from '../entities';
 
@@ -23,11 +23,11 @@ import { ScanRecord } from '../entities';
 /**
  * @swagger
  * tags:
- *   name: Scan
+ *   name: Scans
  *   description: 掃描記錄管理
  */
 @Service()
-@JsonController('/scans')
+@JsonController('/api/scans')
 export class ScanController {
     constructor(private scanService: ScanService) {}
 
@@ -288,6 +288,35 @@ export class ScanController {
      *   get:
      *     summary: 匯出掃描記錄
      *     tags: [Scans]
+     *     parameters:
+     *       - in: path
+     *         name: eventId
+     *         required: true
+     *         schema:
+     *           type: string
+     *           format: uuid
+     *         description: 展覽活動ID
+     *       - in: query
+     *         name: startDate
+     *         schema:
+     *           type: string
+     *           format: date
+     *         description: 開始日期
+     *       - in: query
+     *         name: endDate
+     *         schema:
+     *           type: string
+     *           format: date
+     *         description: 結束日期
+     *     responses:
+     *       200:
+     *         description: 成功匯出掃描記錄
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: array
+     *               items:
+     *                 type: object
      */
     @Get('/event/:eventId/export')
     async exportScans(
@@ -296,5 +325,107 @@ export class ScanController {
         @QueryParam('endDate') endDate?: Date
     ) {
         return await this.scanService.exportScans(eventId, startDate, endDate);
+    }
+
+    /**
+     * @swagger
+     * /api/scans/event/{eventId}/peak-hours:
+     *   get:
+     *     summary: 取得展覽的熱門時段（尖峰時段）
+     *     tags: [Scans]
+     *     parameters:
+     *       - in: path
+     *         name: eventId
+     *         required: true
+     *         schema:
+     *           type: string
+     *           format: uuid
+     *         description: 展覽活動ID
+     *       - in: query
+     *         name: date
+     *         schema:
+     *           type: string
+     *           format: date
+     *         description: 指定日期（選填）
+     *     responses:
+     *       200:
+     *         description: 成功取得熱門時段數據
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: array
+     *               items:
+     *                 type: object
+     *                 properties:
+     *                   hour:
+     *                     type: integer
+     *                   total_scans:
+     *                     type: integer
+     *                   unique_visitors:
+     *                     type: integer
+     */
+    @Get('/event/:eventId/peak-hours')
+    async getPeakHours(
+        @Param('eventId') eventId: string,
+        @QueryParam('date') date?: Date
+    ) {
+        return await this.scanService.getPeakHours(eventId, date);
+    }
+
+    /**
+     * @swagger
+     * /api/scans/check-duplicate:
+     *   post:
+     *     summary: 檢查是否為重複掃描（防止短時間內重複掃描）
+     *     tags: [Scans]
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             required:
+     *               - attendeeId
+     *               - boothId
+     *             properties:
+     *               attendeeId:
+     *                 type: string
+     *                 format: uuid
+     *                 description: 參展人員ID
+     *               boothId:
+     *                 type: string
+     *                 format: uuid
+     *                 description: 攤位ID
+     *               timeWindowMinutes:
+     *                 type: integer
+     *                 default: 5
+     *                 description: 時間窗口（分鐘）
+     *     responses:
+     *       200:
+     *         description: 檢查結果
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 is_duplicate:
+     *                   type: boolean
+     *                   description: 是否為重複掃描
+     */
+    @Post('/check-duplicate')
+    async checkDuplicateScan(@Body() body: {
+        attendeeId: string;
+        boothId: string;
+        timeWindowMinutes?: number;
+    }) {
+        const isDuplicate = await this.scanService.isDuplicateScan(
+            body.attendeeId,
+            body.boothId,
+            body.timeWindowMinutes
+        );
+
+        return {
+            is_duplicate: isDuplicate,
+        };
     }
 }

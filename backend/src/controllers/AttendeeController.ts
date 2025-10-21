@@ -23,7 +23,7 @@ import { Attendee } from '../entities';
  *   description: 參展人員管理
  */
 @Service()
-@JsonController('/attendees')
+@JsonController('/api/attendees')
 export class AttendeeController {
     constructor(private attendeeService: AttendeeService) {}
 
@@ -478,5 +478,90 @@ export class AttendeeController {
     @Get('/:id/history')
     async getAttendeeHistory(@Param('id') id: string) {
         return await this.attendeeService.getScanHistory(id);
+    }
+
+    /**
+     * @swagger
+     * /api/attendees/company/{eventId}/{company}:
+     *   get:
+     *     summary: 根據公司取得參展人員
+     *     tags: [Attendees]
+     *     parameters:
+     *       - in: path
+     *         name: eventId
+     *         required: true
+     *         schema:
+     *           type: string
+     *           format: uuid
+     *         description: 展覽活動ID
+     *       - in: path
+     *         name: company
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: 公司名稱
+     *     responses:
+     *       200:
+     *         description: 成功取得公司的參展人員列表
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: array
+     *               items:
+     *                 $ref: '#/components/schemas/Attendee'
+     */
+    @Get('/company/:eventId/:company')
+    async getAttendeesByCompany(
+        @Param('eventId') eventId: string,
+        @Param('company') company: string
+    ): Promise<Attendee[]> {
+        return await this.attendeeService.findByCompany(eventId, company);
+    }
+
+    /**
+     * @swagger
+     * /api/attendees/event/{eventId}/stats:
+     *   get:
+     *     summary: 取得展覽的參展人員統計
+     *     tags: [Attendees]
+     *     parameters:
+     *       - in: path
+     *         name: eventId
+     *         required: true
+     *         schema:
+     *           type: string
+     *           format: uuid
+     *         description: 展覽活動ID
+     *     responses:
+     *       200:
+     *         description: 成功取得展覽參展人員統計
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 total:
+     *                   type: integer
+     *                   description: 總參展人員數
+     *                 with_scans:
+     *                   type: integer
+     *                   description: 有掃描紀錄的人員數
+     *                 without_scans:
+     *                   type: integer
+     *                   description: 無掃描紀錄的人員數
+     *                 top_companies:
+     *                   type: array
+     *                   description: 參展人數最多的公司 Top 10
+     *                   items:
+     *                     type: object
+     *                     properties:
+     *                       company:
+     *                         type: string
+     *                       count:
+     *                         type: integer
+     */
+    @Get('/event/:eventId/stats')
+    async getEventAttendeeStats(@Param('eventId') eventId: string) {
+        return await this.attendeeService.getEventStats(eventId);
     }
 }

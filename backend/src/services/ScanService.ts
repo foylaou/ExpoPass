@@ -3,21 +3,21 @@
 // ============================================
 import { Service } from 'typedi';
 import { Repository, Between } from 'typeorm';
-import { InjectRepository } from 'typeorm-typedi-extensions';
 import { ScanRecord , Attendee , Booth } from '../entities';
-
+import { AppDataSource } from '../config/data-source';
 import { CreateScanDto, ScanByTokenDto, UpdateScanDto } from '../dto/ScanDto';
 
 @Service()
 export class ScanService {
-    constructor(
-        @InjectRepository(ScanRecord)
-        private scanRepository: Repository<ScanRecord>,
-        @InjectRepository(Attendee)
-        private attendeeRepository: Repository<Attendee>,
-        @InjectRepository(Booth)
-        private boothRepository: Repository<Booth>
-    ) {}
+    private scanRepository: Repository<ScanRecord>;
+    private attendeeRepository: Repository<Attendee>;
+    private boothRepository: Repository<Booth>;
+    
+    constructor() {
+        this.scanRepository = AppDataSource.getRepository(ScanRecord);
+        this.attendeeRepository = AppDataSource.getRepository(Attendee);
+        this.boothRepository = AppDataSource.getRepository(Booth);
+    }
 
     /**
      * 建立掃描記錄

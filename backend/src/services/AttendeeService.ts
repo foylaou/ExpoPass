@@ -1,16 +1,17 @@
 import {Service} from 'typedi';
 import {Repository} from 'typeorm';
-import {InjectRepository} from 'typeorm-typedi-extensions';
 import {Attendee} from '../entities';
 import {BatchCreateAttendeeDto, CreateAttendeeDto, UpdateAttendeeDto} from '../dto/AttendeeDto';
+import {AppDataSource} from '../config/data-source';
 import {v4 as uuidv4} from 'uuid';
 
 @Service()
 export class AttendeeService {
-    constructor(
-        @InjectRepository(Attendee)
-        private attendeeRepository: Repository<Attendee>
-    ) {}
+    private attendeeRepository: Repository<Attendee>;
+    
+    constructor() {
+        this.attendeeRepository = AppDataSource.getRepository(Attendee);
+    }
 
     /**
      * 生成唯一的 QR Code Token
@@ -168,7 +169,7 @@ export class AttendeeService {
     async getScanStats(id: string) {
         return await this.attendeeRepository
             .createQueryBuilder('attendee')
-            .leftJoin('attendee.scan_records', 'scan')
+            .leftJoin('attendee.scanRecords', 'scan')
             .leftJoin('scan.booth', 'booth')
             .select('attendee')
             .addSelect('COUNT(DISTINCT scan.booth_id)', 'visited_booths')
@@ -185,7 +186,7 @@ export class AttendeeService {
     async getScanHistory(id: string) {
         const attendee = await this.attendeeRepository.findOne({
             where: { id },
-            relations: ['scan_records', 'scan_records.booth'],
+            relations: ['scanRecords', 'scanRecords.booth'],
             order: {
                 scanRecords: {
                     scannedAt: 'DESC',
@@ -219,7 +220,7 @@ export class AttendeeService {
 
         const withScans = await this.attendeeRepository
             .createQueryBuilder('attendee')
-            .leftJoin('attendee.scan_records', 'scan')
+            .leftJoin('attendee.scanRecords', 'scan')
             .where('attendee.event_id = :eventId', { eventId })
             .andWhere('scan.id IS NOT NULL')
             .select('COUNT(DISTINCT attendee.id)', 'count')

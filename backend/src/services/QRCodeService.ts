@@ -1,9 +1,9 @@
 import { Service } from 'typedi';
 import { Repository } from 'typeorm';
-import { InjectRepository } from 'typeorm-typedi-extensions';
 import QRCode from 'qrcode';
 import * as archiver from 'archiver';
 import { Booth , Attendee} from '../entities';
+import { AppDataSource } from '../config/data-source';
 import { Response } from 'express';
 
 export interface QRCodeOptions {
@@ -18,12 +18,13 @@ export interface QRCodeOptions {
 
 @Service()
 export class QRCodeService {
-    constructor(
-        @InjectRepository(Attendee)
-        private attendeeRepository: Repository<Attendee>,
-        @InjectRepository(Booth)
-        private boothRepository: Repository<Booth>
-    ) {}
+    private attendeeRepository: Repository<Attendee>;
+    private boothRepository: Repository<Booth>;
+    
+    constructor() {
+        this.attendeeRepository = AppDataSource.getRepository(Attendee);
+        this.boothRepository = AppDataSource.getRepository(Booth);
+    }
 
     /**
      * 生成 QR Code 為 Data URL (base64)

@@ -1,5 +1,7 @@
 import "reflect-metadata";
 import { DataSource } from "typeorm";
+import { useContainer } from "typeorm";
+import { Container } from "typedi";
 import * as dotenv from "dotenv";
 import { Attendee, Booth, Event, ScanRecord } from "../entities";
 
@@ -29,6 +31,9 @@ export const initializeDatabase = async () => {
         console.log(`  Database: ${process.env.DB_NAME || 'expo_pass'}`);
         console.log(`  Password length: ${(process.env.DB_PASSWORD || '').length}`);
 
+        // 設定 TypeORM 使用 TypeDI 容器
+        useContainer(Container);
+        
         await AppDataSource.initialize();
         console.log('✅ Database connection established successfully');
         console.log('📄 Using existing database schema (synchronize: false)');

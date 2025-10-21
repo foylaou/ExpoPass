@@ -20,7 +20,7 @@ import { QRCodeService } from '../services';
  *   description: QR Code 生成
  */
 @Service()
-@JsonController('/qrcode')
+@JsonController('/api/qrcode')
 export class QRCodeController {
     constructor(private qrcodeService: QRCodeService) {}
 

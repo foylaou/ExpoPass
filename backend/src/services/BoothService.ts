@@ -1,16 +1,17 @@
 import { Service } from 'typedi';
 import { Repository } from 'typeorm';
-import { InjectRepository } from 'typeorm-typedi-extensions';
 import { Booth } from '../entities';
 import { CreateBoothDto, UpdateBoothDto, BatchCreateBoothDto } from '../dto/BoothDto';
+import { AppDataSource } from '../config/data-source';
 import { v4 as uuidv4 } from 'uuid';
 
 @Service()
 export class BoothService {
-    constructor(
-        @InjectRepository(Booth)
-        private boothRepository: Repository<Booth>
-    ) {}
+    private boothRepository: Repository<Booth>;
+    
+    constructor() {
+        this.boothRepository = AppDataSource.getRepository(Booth);
+    }
 
     /**
      * 生成唯一的 QR Code Token
@@ -164,7 +165,7 @@ export class BoothService {
     async getScanStats(id: string) {
         const result = await this.boothRepository
             .createQueryBuilder('booth')
-            .leftJoin('booth.scan_records', 'scan')
+            .leftJoin('booth.scanRecords', 'scan')
             .leftJoin('scan.attendee', 'attendee')
             .select('booth')
             .addSelect('COUNT(DISTINCT scan.attendee_id)', 'unique_visitors')
@@ -183,7 +184,7 @@ export class BoothService {
     async getVisitors(id: string) {
         const booth = await this.boothRepository.findOne({
             where: { id },
-            relations: ['scan_records', 'scan_records.attendee'],
+            relations: ['scanRecords', 'scanRecords.attendee'],
             order: {
                 scanRecords: {
                     scannedAt: 'DESC',
@@ -200,7 +201,7 @@ export class BoothService {
     async getDailyStats(id: string, startDate?: Date, endDate?: Date) {
         let query = this.boothRepository
             .createQueryBuilder('booth')
-            .leftJoin('booth.scan_records', 'scan')
+            .leftJoin('booth.scanRecords', 'scan')
             .select("DATE(scan.scanned_at)", 'date')
             .addSelect('COUNT(DISTINCT scan.attendee_id)', 'unique_visitors')
             .addSelect('COUNT(scan.id)', 'total_scans')
@@ -225,7 +226,7 @@ export class BoothService {
     async getHourlyStats(id: string, date?: Date) {
         let query = this.boothRepository
             .createQueryBuilder('booth')
-            .leftJoin('booth.scan_records', 'scan')
+            .leftJoin('booth.scanRecords', 'scan')
             .select("EXTRACT(HOUR FROM scan.scanned_at)", 'hour')
             .addSelect('COUNT(DISTINCT scan.attendee_id)', 'unique_visitors')
             .addSelect('COUNT(scan.id)', 'total_scans')
@@ -250,7 +251,7 @@ export class BoothService {
 
         const withScans = await this.boothRepository
             .createQueryBuilder('booth')
-            .leftJoin('booth.scan_records', 'scan')
+            .leftJoin('booth.scanRecords', 'scan')
             .where('booth.event_id = :eventId', { eventId })
             .andWhere('scan.id IS NOT NULL')
             .select('COUNT(DISTINCT booth.id)', 'count')
@@ -259,7 +260,7 @@ export class BoothService {
         // 熱門攤位 Top 10
         const topBooths = await this.boothRepository
             .createQueryBuilder('booth')
-            .leftJoin('booth.scan_records', 'scan')
+            .leftJoin('booth.scanRecords', 'scan')
             .select('booth.id', 'id')
             .addSelect('booth.booth_number', 'booth_number')
             .addSelect('booth.booth_name', 'booth_name')
@@ -275,7 +276,7 @@ export class BoothService {
         // 冷門攤位（沒有訪客的攤位）
         const noVisitorBooths = await this.boothRepository
             .createQueryBuilder('booth')
-            .leftJoin('booth.scan_records', 'scan')
+            .leftJoin('booth.scanRecords', 'scan')
             .select('booth.id', 'id')
             .addSelect('booth.booth_number', 'booth_number')
             .addSelect('booth.booth_name', 'booth_name')
@@ -312,7 +313,7 @@ export class BoothService {
     async getRepeatVisitors(id: string) {
         return await this.boothRepository
             .createQueryBuilder('booth')
-            .leftJoin('booth.scan_records', 'scan')
+            .leftJoin('booth.scanRecords', 'scan')
             .leftJoin('scan.attendee', 'attendee')
             .select('attendee.id', 'attendee_id')
             .addSelect('attendee.name', 'attendee_name')

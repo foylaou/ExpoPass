@@ -321,4 +321,76 @@ export class EventController {
     }
     return event;
   }
+
+  /**
+   * @swagger
+   * /api/events/code/{eventCode}:
+   *   get:
+   *     summary: 根據展覽代碼取得展覽活動
+   *     tags: [Events]
+   *     parameters:
+   *       - in: path
+   *         name: eventCode
+   *         required: true
+   *         schema:
+   *           type: string
+   *         description: 展覽代碼
+   *     responses:
+   *       200:
+   *         description: 成功取得展覽活動
+   *         content:
+   *           application/json:
+   *             schema:
+   *               $ref: '#/components/schemas/Event'
+   *       404:
+   *         description: 找不到展覽活動
+   */
+  @Get('/code/:eventCode')
+  async getEventByCode(@Param('eventCode') eventCode: string): Promise<Event> {
+    const event = await this.eventService.findByEventCode(eventCode);
+    if (!event) {
+      throw new NotFoundError('展覽活動不存在');
+    }
+    return event;
+  }
+
+  /**
+   * @swagger
+   * /api/events/{id}/scan-records:
+   *   get:
+   *     summary: 取得展覽活動的掃描紀錄
+   *     tags: [Events]
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *           format: uuid
+   *         description: 展覽活動ID
+   *     responses:
+   *       200:
+   *         description: 成功取得掃描紀錄
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 event:
+   *                   $ref: '#/components/schemas/Event'
+   *                 scanRecords:
+   *                   type: array
+   *                   items:
+   *                     $ref: '#/components/schemas/ScanRecord'
+   *       404:
+   *         description: 找不到展覽活動
+   */
+  @Get('/:id/scan-records')
+  async getEventWithScanRecords(@Param('id') id: string): Promise<Event> {
+    const event = await this.eventService.findWithScanRecords(id);
+    if (!event) {
+      throw new NotFoundError('展覽活動不存在');
+    }
+    return event;
+  }
 }

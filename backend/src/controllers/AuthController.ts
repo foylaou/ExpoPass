@@ -13,8 +13,15 @@ import {
 import { Service } from 'typedi';
 import { AuthService } from '../services/AuthService';
 
+
+/**
+ * @swagger
+ * tags:
+ *   name: Auth
+ *   description: 簡易登入權限管理
+ */
 @Service()
-@JsonController('/auth')
+@JsonController('/api/auth')
 export class AuthController {
     constructor(private authService: AuthService) {}
 
@@ -152,6 +159,20 @@ export class AuthController {
      *     tags: [Auth]
      *     security:
      *       - bearerAuth: []
+     *     responses:
+     *       200:
+     *         description: 成功取得使用者資訊
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 success:
+     *                   type: boolean
+     *                 data:
+     *                   type: object
+     *       401:
+     *         description: 未授權或 Token 無效
      */
     @Get('/me')
     async getCurrentUser(@HeaderParam('authorization') authorization: string) {
@@ -169,6 +190,118 @@ export class AuthController {
             };
         } catch (error: any) {
             throw new UnauthorizedError(error.message || 'Invalid token');
+        }
+    }
+
+    /**
+     * @swagger
+     * /api/auth/admin/list:
+     *   get:
+     *     summary: 取得所有管理員清單（不含密碼）
+     *     tags: [Auth]
+     *     security:
+     *       - bearerAuth: []
+     *     responses:
+     *       200:
+     *         description: 成功取得管理員清單
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 success:
+     *                   type: boolean
+     *                 data:
+     *                   type: array
+     *                   items:
+     *                     type: object
+     *                     properties:
+     *                       username:
+     *                         type: string
+     *                       email:
+     *                         type: string
+     *                       role:
+     *                         type: string
+     *                         enum: [super_admin, admin, viewer]
+     */
+    @Get('/admin/list')
+    async getAdminList(@HeaderParam('authorization') authorization: string) {
+        try {
+            if (!authorization || !authorization.startsWith('Bearer ')) {
+                throw new UnauthorizedError('No token provided');
+            }
+
+            const token = authorization.substring(7);
+            const payload = this.authService.verifyJWT(token);
+
+            // 只有管理員才能查看管理員清單
+            if (payload.type !== 'admin') {
+                throw new UnauthorizedError('Insufficient permissions');
+            }
+
+            const adminList = this.authService.getAdminList();
+
+            return {
+                success: true,
+                data: adminList,
+            };
+        } catch (error: any) {
+            throw new UnauthorizedError(error.message || 'Access denied');
+        }
+    }
+
+    /**
+     * @swagger
+     * /api/auth/hash-password:
+     *   post:
+     *     summary: 密碼加密工具（使用 Argon2）
+     *     tags: [Auth]
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             required:
+     *               - password
+     *             properties:
+     *               password:
+     *                 type: string
+     *                 description: 要加密的明文密碼
+     *     responses:
+     *       200:
+     *         description: 成功加密密碼
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 success:
+     *                   type: boolean
+     *                 data:
+     *                   type: object
+     *                   properties:
+     *                     hash:
+     *                       type: string
+     *                       description: 加密後的密碼 Hash
+     */
+    @Post('/hash-password')
+    async hashPassword(@Body() body: { password: string }) {
+        try {
+            if (!body.password) {
+                throw new BadRequestError('Password is required');
+            }
+
+            const hash = await this.authService.hashPassword(body.password);
+
+            return {
+                success: true,
+                data: {
+                    hash,
+                },
+            };
+        } catch (error: any) {
+            throw new BadRequestError(error.message || 'Failed to hash password');
         }
     }
 }

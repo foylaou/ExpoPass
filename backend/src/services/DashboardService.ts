@@ -3,22 +3,22 @@
 // ============================================
 import { Service } from 'typedi';
 import { Repository, Between, MoreThan } from 'typeorm';
-import { InjectRepository } from 'typeorm-typedi-extensions';
 import { Event , Attendee, Booth ,ScanRecord } from '../entities';
-
+import { AppDataSource } from '../config/data-source';
 
 @Service()
 export class DashboardService {
-    constructor(
-        @InjectRepository(Event)
-        private eventRepository: Repository<Event>,
-        @InjectRepository(Attendee)
-        private attendeeRepository: Repository<Attendee>,
-        @InjectRepository(Booth)
-        private boothRepository: Repository<Booth>,
-        @InjectRepository(ScanRecord)
-        private scanRepository: Repository<ScanRecord>
-    ) {}
+    private eventRepository: Repository<Event>;
+    private attendeeRepository: Repository<Attendee>;
+    private boothRepository: Repository<Booth>;
+    private scanRepository: Repository<ScanRecord>;
+    
+    constructor() {
+        this.eventRepository = AppDataSource.getRepository(Event);
+        this.attendeeRepository = AppDataSource.getRepository(Attendee);
+        this.boothRepository = AppDataSource.getRepository(Booth);
+        this.scanRepository = AppDataSource.getRepository(ScanRecord);
+    }
 
     /**
      * 展覽儀表板總覽
@@ -399,7 +399,7 @@ export class DashboardService {
         // 檢查：沒有任何訪客的攤位
         const noVisitorBooths = await this.boothRepository
             .createQueryBuilder('booth')
-            .leftJoin('booth.scan_records', 'scan')
+            .leftJoin('booth.scanRecords', 'scan')
             .select('booth.id', 'booth_id')
             .addSelect('booth.booth_number', 'booth_number')
             .addSelect('booth.booth_name', 'booth_name')

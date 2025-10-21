@@ -19,11 +19,11 @@ import { ReportService } from '../services';
 /**
  * @swagger
  * tags:
- *   name: Report
+ *   name: Reports
  *   description: 統計報表
  */
 @Service()
-@JsonController('/reports')
+@JsonController('/api/reports')
 export class ReportController {
     constructor(private reportService: ReportService) {}
 

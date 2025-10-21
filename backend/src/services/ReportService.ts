@@ -3,22 +3,22 @@
 // ============================================
 import { Service } from 'typedi';
 import { Repository, Between } from 'typeorm';
-import { InjectRepository } from 'typeorm-typedi-extensions';
 import { Event , Attendee ,Booth, ScanRecord} from '../entities';
-
+import { AppDataSource } from '../config/data-source';
 
 @Service()
 export class ReportService {
-    constructor(
-        @InjectRepository(Event)
-        private eventRepository: Repository<Event>,
-        @InjectRepository(Attendee)
-        private attendeeRepository: Repository<Attendee>,
-        @InjectRepository(Booth)
-        private boothRepository: Repository<Booth>,
-        @InjectRepository(ScanRecord)
-        private scanRepository: Repository<ScanRecord>
-    ) {}
+    private eventRepository: Repository<Event>;
+    private attendeeRepository: Repository<Attendee>;
+    private boothRepository: Repository<Booth>;
+    private scanRepository: Repository<ScanRecord>;
+    
+    constructor() {
+        this.eventRepository = AppDataSource.getRepository(Event);
+        this.attendeeRepository = AppDataSource.getRepository(Attendee);
+        this.boothRepository = AppDataSource.getRepository(Booth);
+        this.scanRepository = AppDataSource.getRepository(ScanRecord);
+    }
 
     /**
      * 展覽總覽報表
@@ -460,7 +460,7 @@ export class ReportService {
         // 沒有任何訪客的攤位
         const noVisitorBooths = await this.boothRepository
             .createQueryBuilder('booth')
-            .leftJoin('booth.scan_records', 'scan')
+            .leftJoin('booth.scanRecords', 'scan')
             .select('booth.*')
             .where('booth.event_id = :eventId', { eventId })
             .andWhere('scan.id IS NULL')
