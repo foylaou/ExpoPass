@@ -10,7 +10,7 @@ import {
     UnauthorizedError,
     BadRequestError,
 } from 'routing-controllers';
-import { Service } from 'typedi';
+import { Service, Container } from 'typedi';
 import { AuthService } from '../services/AuthService';
 
 
@@ -23,7 +23,9 @@ import { AuthService } from '../services/AuthService';
 @Service()
 @JsonController('/api/auth')
 export class AuthController {
-    constructor(private authService: AuthService) {}
+    private get authService(): AuthService {
+        return Container.get(AuthService);
+    }
 
     /**
      * @swagger

@@ -5,12 +5,12 @@ import type {
     getAllAttendeesResponse, GetAttendeeByTokenRequest, SearchAttendeeRequest
 } from "./attendeesType.ts";
 import axios from "axios";
-import type {ApiResponse} from "../../types";
+import type {ApiResponse} from "../apiTypes";
 
 
 
 const service_name:string = "attendees"
-const API_URL:string = import.meta.env.API_URL||"http://localhost:3000/api/"||"http://localhost:5173/api/";
+const API_URL:string = import.meta.env.VITE_API_URL || "/api";
 const API: string = `${API_URL}/${service_name}`;
 const api = axios.create({
     baseURL: `${API}`,  // API請求的基礎路徑
@@ -30,7 +30,12 @@ export const attendeesServices = {
     async GetAllAttendees(data: getAllAttendeesRequest): Promise<ApiResponse<getAllAttendeesResponse>> {
         try {
             const response = await api.get(`?eventId=${data.eventId}`);
-            return response.data;
+            // 後端直接返回 Attendee[] 陣列，需要包裝成統一格式
+            const attendees = Array.isArray(response.data) ? response.data : [];
+            return {
+                success: true,
+                data: { attendees }
+            };
         } catch (error) {
             console.log("GetAllAttendees:" + error);
             return {success: false, message: "查詢基本資料失敗，伺服器回應異常"};

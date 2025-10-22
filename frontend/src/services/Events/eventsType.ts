@@ -17,11 +17,12 @@ import type { Attendee } from "../Attendees/attendeesType.ts";
 export interface Event {
     id: string;
     eventName: string;
+    eventCode: string;
     startDate: string;
     endDate: string;
     location: string;
     description: string;
-    status: string;
+    status: "upcoming" | "active" | "ended";
     createdAt: string;
     updatedAt: string;
 }

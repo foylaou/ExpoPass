@@ -1,3 +1,4 @@
+//frontend/src/services/Booths/boothsType.ts
 import type { Attendee } from "../Attendees/attendeesType.ts";
 
 /**

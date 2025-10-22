@@ -1,11 +1,13 @@
+//frontend/src/services/Dashboard/dashboardServices.ts
 import axios from "axios";
-import type {ApiResponse} from "../../types";
-import type {AlertsDashboard, BoothDashboard, Dashboard, LiveDashboard} from "./dashboardType.ts";
+import type {Dashboard, LiveDashboard, AlertsDashboard, BoothDashboard} from "./dashboardType.ts";
+import type {ApiResponse} from "../apiTypes";
 
 
 const service_name: string = "dashboard"
-const API_URL: string = import.meta.env.API_URL || "http://localhost:3000/api/" || "http://localhost:5173/api/";
+const API_URL: string = import.meta.env.VITE_API_URL || "/api";
 const API: string = `${API_URL}/${service_name}`;
+console.log(`[dashboardServices] API URL: ${API}`);
 const api = axios.create({
     baseURL: `${API}`,  // API請求的基礎路徑
     timeout: 10000, // 超時設置
@@ -26,17 +28,25 @@ export const dashboardServices = {
      */
     async fetchDashboards(eventId: string): Promise<ApiResponse<Dashboard>> {
         try {
-            const response = await api.get(`/${eventId}`, {
+            const response = await api.get(`/event/${eventId}`, {
                 headers: {
                     'Content-Type': 'application/json',
                 }
             });
+            // 如果後端直接返回對象，包裝成 ApiResponse
+            if (response.data && !response.data.success) {
+                return {
+                    success: true,
+                    data: response.data
+                };
+            }
             return response.data;
-        } catch (error) {
+        } catch (error: any) {
             console.error(`fetchDashboards Error:`, error);
+            console.error(`Error details:`, error.response?.data || error.message);
             return {
                 success: false,
-                message: "取得儀表板資訊錯誤，請稍後再試。"
+                message: error.response?.data?.message || error.message || "取得儀表板資訊錯誤，請稍後再試。"
             };
         }
     },
@@ -50,17 +60,25 @@ export const dashboardServices = {
      */
     async LiveDashboard(eventId: string): Promise<ApiResponse<LiveDashboard>> {
         try {
-            const response = await api.get(`/${eventId}/live`, {
+            const response = await api.get(`/event/${eventId}/live`, {
                 headers: {
                     'Content-Type': 'application/json',
                 }
             });
+            // 如果後端直接返回對象，包裝成 ApiResponse
+            if (response.data && !response.data.success) {
+                return {
+                    success: true,
+                    data: response.data
+                };
+            }
             return response.data;
-        } catch (error) {
+        } catch (error: any) {
             console.error(`LiveDashboard Error:`, error);
+            console.error(`Error details:`, error.response?.data || error.message);
             return {
                 success: false,
-                message: "取得即時儀表板發生錯誤，請稍後再試。"
+                message: error.response?.data?.message || error.message || "取得即時儀表板發生錯誤，請稍後再試。"
             };
         }
     },
@@ -98,17 +116,25 @@ export const dashboardServices = {
      */
     async fetchAlertsDashboard(eventId: string): Promise<ApiResponse<AlertsDashboard>> {
         try {
-            const response = await api.get(`/${eventId}/alerts`, {
+            const response = await api.get(`/event/${eventId}/alerts`, {
                 headers: {
                     'Content-Type': 'application/json',
                 }
             });
+            // 如果後端直接返回對象，包裝成 ApiResponse
+            if (response.data && !response.data.success) {
+                return {
+                    success: true,
+                    data: response.data
+                };
+            }
             return response.data;
-        } catch (error) {
+        } catch (error: any) {
             console.error(`fetchAlertsDashboard Error:`, error);
+            console.error(`Error details:`, error.response?.data || error.message);
             return {
                 success: false,
-                message: "取得警報儀表板資訊錯誤，請稍後再試。"
+                message: error.response?.data?.message || error.message || "取得警報儀表板資訊錯誤，請稍後再試。"
             };
         }
     }

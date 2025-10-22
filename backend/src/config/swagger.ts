@@ -19,6 +19,13 @@ const options: swaggerJsdoc.Options = {
       },
     ],
     components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
+      },
       schemas: {
         Event: {
           type: 'object',
@@ -195,6 +202,77 @@ const options: swaggerJsdoc.Options = {
             message: {
               type: 'string',
               description: '錯誤訊息',
+            },
+          },
+        },
+        ImportResult: {
+          type: 'object',
+          properties: {
+            success: {
+              type: 'boolean',
+              description: '匯入是否成功',
+            },
+            data: {
+              type: 'object',
+              properties: {
+                total: {
+                  type: 'integer',
+                  description: '總筆數',
+                },
+                success: {
+                  type: 'integer',
+                  description: '成功筆數',
+                },
+                failed: {
+                  type: 'integer',
+                  description: '失敗筆數',
+                },
+                errors: {
+                  type: 'array',
+                  description: '錯誤詳細資訊',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      row: {
+                        type: 'integer',
+                        description: '錯誤行號',
+                      },
+                      data: {
+                        type: 'object',
+                        description: '錯誤資料',
+                      },
+                      error: {
+                        type: 'string',
+                        description: '錯誤訊息',
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+        FileUpload: {
+          type: 'object',
+          properties: {
+            file: {
+              type: 'string',
+              format: 'binary',
+              description: 'Excel 或 CSV 檔案',
+            },
+          },
+          required: ['file'],
+        },
+        SuccessResponse: {
+          type: 'object',
+          properties: {
+            success: {
+              type: 'boolean',
+              description: '操作是否成功',
+            },
+            message: {
+              type: 'string',
+              description: '回應訊息',
             },
           },
         },

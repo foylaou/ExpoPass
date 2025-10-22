@@ -18,12 +18,12 @@ export interface QRCodeOptions {
 
 @Service()
 export class QRCodeService {
-    private attendeeRepository: Repository<Attendee>;
-    private boothRepository: Repository<Booth>;
+    private get attendeeRepository(): Repository<Attendee> {
+        return AppDataSource.getRepository(Attendee);
+    }
     
-    constructor() {
-        this.attendeeRepository = AppDataSource.getRepository(Attendee);
-        this.boothRepository = AppDataSource.getRepository(Booth);
+    private get boothRepository(): Repository<Booth> {
+        return AppDataSource.getRepository(Booth);
     }
 
     /**
@@ -237,14 +237,19 @@ export class QRCodeService {
     }
 
     /**
-     * 驗證 QR Code Token
+     * 驗證 QR Code Token 或 ID
+     * 支援格式：
+     * - QR Code Token: ATT_xxx 或 BOOTH_xxx
+     * - UUID: 直接使用 ID 查詢
      */
     async verifyToken(token: string): Promise<{
         valid: boolean;
         type: 'attendee' | 'booth' | null;
         data: Attendee | Booth | null;
     }> {
-        // 先檢查是否為參展人員 Token
+        console.log('[QRCodeService] verifyToken called with token:', token);
+        
+        // 檢查是否為參展人員 Token
         if (token.startsWith('ATT_')) {
             const attendee = await this.attendeeRepository.findOne({
                 where: { qrCodeToken: token },
@@ -264,6 +269,39 @@ export class QRCodeService {
         if (token.startsWith('BOOTH_')) {
             const booth = await this.boothRepository.findOne({
                 where: { qrCodeToken: token },
+                relations: ['event'],
+            });
+
+            if (booth) {
+                return {
+                    valid: true,
+                    type: 'booth',
+                    data: booth,
+                };
+            }
+        }
+
+        // 如果不是 token 格式，嘗試用 UUID 查詢
+        // 先檢查是否為有效的 UUID 格式
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (uuidRegex.test(token)) {
+            // 嘗試用 ID 查詢 Attendee
+            const attendee = await this.attendeeRepository.findOne({
+                where: { id: token },
+                relations: ['event'],
+            });
+
+            if (attendee) {
+                return {
+                    valid: true,
+                    type: 'attendee',
+                    data: attendee,
+                };
+            }
+
+            // 嘗試用 ID 查詢 Booth
+            const booth = await this.boothRepository.findOne({
+                where: { id: token },
                 relations: ['event'],
             });
 

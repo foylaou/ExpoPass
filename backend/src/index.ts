@@ -12,6 +12,7 @@ import { initializeDatabase } from './config/data-source';
 import { swaggerSpec } from './config/swagger';
 import {
     AttendeeController,
+    AuthController,
     BoothController,
     DashboardController,
     EventController,
@@ -38,8 +39,6 @@ app.use(cors({
 })); // 跨域請求
 }
 app.use(morgan('combined')); // 日誌
-app.use(express.json()); // 解析 JSON
-app.use(express.urlencoded({ extended: true })); // 解析 URL-encoded
 
 // Swagger API 文檔
 app.use('/api/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
@@ -47,13 +46,14 @@ app.use('/api/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customSiteTitle: 'ExpoPass API Documentation'
 }));
 
-// 設定依賴注入容器
+// 設定依賴注入容器 - 必須在 routing-controllers 之前
 useContainer(Container);
 
 // 設定 routing-controllers
 useExpressServer(app, {
   controllers: [
       AttendeeController,
+      AuthController,
       BoothController,
       DashboardController,
       EventController,
@@ -62,9 +62,10 @@ useExpressServer(app, {
       ReportController,
       ScanController,
   ],
-  defaultErrorHandler: false,
+  defaultErrorHandler: true, // 啟用預設錯誤處理
   validation: true,
   classTransformer: true,
+  routePrefix: '',
 });
 
 // 健康檢查路由

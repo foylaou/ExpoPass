@@ -1,7 +1,7 @@
 // ============================================
 // 2. src/services/AuthService.ts
 // ============================================
-import { Service } from 'typedi';
+import { Service, Container } from 'typedi';
 import jwt from 'jsonwebtoken';
 import * as argon2 from 'argon2';
 import { QRCodeService } from './QRCodeService';
@@ -34,7 +34,7 @@ export class AuthService {
     private jwtExpiresIn: string;
     private adminAccounts: AdminAccount[] = [];
 
-    constructor(private qrcodeService: QRCodeService) {
+    constructor() {
         this.jwtSecret = process.env.JWT_SECRET || 'default-secret-key';
         this.jwtExpiresIn = process.env.JWT_EXPIRES_IN || '7d';
 
@@ -42,14 +42,22 @@ export class AuthService {
             console.warn('⚠️  WARNING: Using default JWT secret key. Please set JWT_SECRET in .env');
         }
 
-        // 載入管理員帳號
+        // 載入管理員帳號（同步處理已 hash 的密碼）
         this.loadAdminAccounts();
+    }
+
+    // 使用 getter 來延遲獲取 QRCodeService，避免循環依賴
+    private get qrcodeService(): QRCodeService {
+        const service = Container.get(QRCodeService);
+        console.log('[AuthService] Getting QRCodeService:', typeof service, Object.keys(service));
+        console.log('[AuthService] verifyToken type:', typeof service.verifyToken);
+        return service;
     }
 
     /**
      * 載入管理員帳號（從環境變數）
      */
-    private async loadAdminAccounts() {
+    private loadAdminAccounts() {
         try {
             // 優先使用 ADMIN_ACCOUNTS（已經 hash 的密碼）
             if (process.env.ADMIN_ACCOUNTS) {
@@ -58,46 +66,13 @@ export class AuthService {
                 return;
             }
 
-            // 如果是明文密碼（開發環境）
-            if (process.env.ADMIN_ACCOUNTS_PLAIN) {
-                const plainAccounts = JSON.parse(process.env.ADMIN_ACCOUNTS_PLAIN);
-
-                // 將明文密碼轉換為 Argon2 hash
-                this.adminAccounts = await Promise.all(
-                    plainAccounts.map(async (account: any) => ({
-                        username: account.username,
-                        password: await argon2.hash(account.password),
-                        email: account.email,
-                        role: account.role || 'admin',
-                    }))
-                );
-
-                console.log(`✅ Loaded ${this.adminAccounts.length} admin accounts (plain, auto-hashed)`);
-                console.log('⚠️  WARNING: Using plain passwords. Please use hashed passwords in production!');
-                return;
-            }
-
-            // 如果都沒有設定，使用預設管理員（僅開發用）
-            console.warn('⚠️  No admin accounts configured, using default admin account');
-            this.adminAccounts = [
-                {
-                    username: 'admin',
-                    password: await argon2.hash('admin123'),
-                    email: 'admin@expopass.com',
-                    role: 'super_admin',
-                },
-            ];
+            // 如果都沒有設定，警告並使用空陣列
+            console.warn('⚠️  No admin accounts configured. Please set ADMIN_ACCOUNTS in .env');
+            console.warn('⚠️  Use /api/auth/hash-password endpoint to generate hashed passwords');
+            this.adminAccounts = [];
         } catch (error) {
             console.error('❌ Failed to load admin accounts:', error);
-            // 使用預設管理員
-            this.adminAccounts = [
-                {
-                    username: 'admin',
-                    password: await argon2.hash('admin123'),
-                    email: 'admin@expopass.com',
-                    role: 'super_admin',
-                },
-            ];
+            this.adminAccounts = [];
         }
     }
 
@@ -226,13 +201,12 @@ export class AuthService {
             };
         }
 
-        // 如果是參展人員或攤位，從資料庫重新取得最新資料
-        const result = await this.qrcodeService.verifyToken(payload.id);
-
+        // 如果是參展人員或攤位，直接返回 payload 資料
+        // JWT payload 中已經包含了必要的資訊
         return {
             id: payload.id,
             type: payload.type,
-            data: result.data,
+            event_id: payload.event_id,
         };
     }
 

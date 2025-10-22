@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import {useState, useEffect} from 'react';
+import { Scanner } from '@yudiel/react-qr-scanner';
 import {
   ScanLine,
   Camera,
-  CameraOff,
   CheckCircle,
   XCircle,
   Users,
@@ -11,7 +11,9 @@ import {
   MessageSquare,
   RefreshCw
 } from 'lucide-react';
-import { scanApi } from '../utils/api';
+import { qrcodeServices } from "../services/QRCode/qrcodeServices.ts";
+import { scansServices } from "../services/Scans/scansServices.ts";
+import toast from 'react-hot-toast';
 
 interface ScanResult {
   success: boolean;
@@ -30,12 +32,12 @@ interface ScanResult {
   is_first_visit?: boolean;
   message?: string;
   error?: string;
+  attendee_token?: string;
+  booth_token?: string;
 }
 
 export const Scan = () => {
-  const videoRef = useRef<HTMLVideoElement>(null);
   const [isScanning, setIsScanning] = useState(false);
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -60,104 +62,140 @@ export const Scan = () => {
   ];
 
   useEffect(() => {
-    void checkCameraPermission();
     loadRecentScans();
   }, []);
-
-  const checkCameraPermission = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      setHasPermission(true);
-      stream.getTracks().forEach(track => track.stop());
-    } catch (error) {
-      setHasPermission(false);
-      console.error('Camera permission denied:', error);
-    }
-  };
 
   const loadRecentScans = () => {
     // 模擬加載最近的掃描記錄
     setRecentScans(mockScanResults);
   };
 
-  const startScanning = async () => {
-    if (!hasPermission) {
-      alert('需要攝像頭權限才能掃描QR碼');
-      return;
-    }
+  // 處理 QR Code 掃描
+  const handleScan = async (result: any) => {
+    if (!result || result.length === 0 || isSubmitting) return;
 
     try {
-      setIsScanning(true);
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: 'environment' // 使用后置攝像頭
-        }
-      });
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-      }
-
-      // 模擬掃描延遲
-      setTimeout(() => {
-        simulateScan();
-      }, 2000);
-
-    } catch (error) {
-      console.error('Failed to start camera:', error);
+      const scannedToken = result[0].rawValue;
       setIsScanning(false);
-      alert('無法啟動攝像頭，請檢查權限設置');
+
+      // 使用 qrcodeServices.verifyToken 驗證
+      const response = await qrcodeServices.verifyToken(scannedToken);
+
+      if (response.success && response.data) {
+        const { valid, type, info } = response.data;
+
+        if (!valid) {
+          setScanResult({
+            success: false,
+            error: 'QR Code 無效或已過期',
+            message: '請確認 QR Code 是否正確',
+          });
+          toast.error('QR Code 無效或已過期');
+          return;
+        }
+
+        // 根據 type 建立 scan result
+        const scanResultData: ScanResult = {
+          success: true,
+          message: '掃描成功！',
+        };
+
+        if (type === 'attendee') {
+          scanResultData.attendee = {
+            id: info?.id || '',
+            name: info?.name || '',
+            company: info?.company,
+            email: info?.email,
+          };
+          scanResultData.attendee_token = scannedToken;
+        } else if (type === 'booth') {
+          scanResultData.booth = {
+            id: info?.id || '',
+            booth_number: info?.booth_number || '',
+            booth_name: info?.booth_name || info?.name || '',
+            company: info?.company,
+          };
+          scanResultData.booth_token = scannedToken;
+        }
+
+        setScanResult(scanResultData);
+        toast.success('掃描成功！');
+      } else {
+        setScanResult({
+          success: false,
+          error: response.message || '驗證失敗',
+          message: '請再試一次',
+        });
+        toast.error(response.message || '驗證失敗');
+      }
+    } catch (error) {
+      console.error('Scan error:', error);
+      setScanResult({
+        success: false,
+        error: '掃描失敗',
+        message: '請稍後再試',
+      });
+      toast.error('掃描失敗，請稍後再試');
     }
   };
 
-  const stopScanning = () => {
-    setIsScanning(false);
-    if (videoRef.current && videoRef.current.srcObject) {
-      const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-      tracks.forEach(track => track.stop());
-      videoRef.current.srcObject = null;
-    }
-  };
-
-  // 模擬掃描功能（實際項目中會使用 QR 掃描庫）
-  const simulateScan = () => {
-    // 隨機選擇一個模擬結果
-    const randomResult = mockScanResults[Math.floor(Math.random() * mockScanResults.length)];
-    setScanResult(randomResult);
-    setIsScanning(false);
-    stopScanning();
-
-    // 添加到最近掃描列表
-    setRecentScans(prev => [randomResult, ...prev.slice(0, 4)]);
+  const handleError = (error: any) => {
+    console.error('Scanner error:', error);
   };
 
   // 處理掃描數據提交
   const handleScanSubmit = async () => {
-    if (!scanResult || !scanResult.attendee || !scanResult.booth) {
+    // 檢查是否同時有參展者和攤位資訊
+    if (!scanResult || !scanResult.attendee_token || !scanResult.booth_token) {
+      toast.error('需要同時掃描參展者和攤位 QR Code');
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // 這里應該使用實際的token，現在用模擬數據
-      const scanData = {
-        attendee_token: `ATT${scanResult.attendee.id}`,
-        booth_token: `BOOTH${scanResult.booth.id}`,
-        notes: notes.trim() || undefined
-      };
-        await scanApi.scanByToken(scanData);
-// 顯示成功消息
-        alert('掃描記錄已保存！');
+      // 使用 scansServices.scanByToken 建立掃描記錄
+      const response = await scansServices.scanByToken({
+        attendee_token: scanResult.attendee_token,
+        booth_token: scanResult.booth_token,
+        notes: notes.trim() || undefined,
+      });
 
-      // 清除當前掃描結果
-      setScanResult(null);
-      setNotes('');
+      if (response.success && response.data) {
+        const { attendee, booth, is_first_visit, message } = response.data;
 
+        toast.success(message || '掃描記錄已保存！');
+
+        // 更新最近掃描記錄
+        const newScanRecord: ScanResult = {
+          success: true,
+          attendee: {
+            id: attendee.id,
+            name: attendee.name,
+            company: attendee.company,
+            email: attendee.email,
+          },
+          booth: {
+            id: booth.id,
+            booth_number: booth.booth_number,
+            booth_name: booth.booth_name,
+            company: booth.company,
+          },
+          is_first_visit,
+          message: message || '掃描成功',
+        };
+
+        setRecentScans(prev => [newScanRecord, ...prev.slice(0, 4)]);
+
+        // 清除當前掃描結果
+        setScanResult(null);
+        setNotes('');
+      } else {
+        toast.error(response.message || '保存失敗，請稍後再試');
+      }
     } catch (error: any) {
       console.error('Failed to submit scan:', error);
-      alert(`提交失敗: ${error.message}`);
+      toast.error(`提交失敗: ${error.message || '請稍後再試'}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -191,61 +229,40 @@ export const Scan = () => {
           <div className="aspect-square max-w-md mx-auto relative bg-gray-900">
             {isScanning ? (
               <>
-                <video
-                  ref={videoRef}
-                  className="w-full h-full object-cover"
-                  playsInline
-                  muted
+                <Scanner
+                  onScan={handleScan}
+                  onError={handleError}
+                  constraints={{
+                    facingMode: 'environment',
+                  }}
+                  styles={{
+                    container: {
+                      width: '100%',
+                      height: '100%',
+                    },
+                  }}
                 />
 
-                {/* 掃描框 */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-64 h-64 border-2 border-white rounded-lg relative">
-                    <div className="absolute top-0 left-0 w-8 h-8 border-l-4 border-t-4 border-blue-500 rounded-tl-lg"></div>
-                    <div className="absolute top-0 right-0 w-8 h-8 border-r-4 border-t-4 border-blue-500 rounded-tr-lg"></div>
-                    <div className="absolute bottom-0 left-0 w-8 h-8 border-l-4 border-b-4 border-blue-500 rounded-bl-lg"></div>
-                    <div className="absolute bottom-0 right-0 w-8 h-8 border-r-4 border-b-4 border-blue-500 rounded-br-lg"></div>
-                  </div>
-                </div>
-
                 {/* 掃描提示 */}
-                <div className="absolute bottom-4 left-0 right-0 text-center">
+                <div className="absolute bottom-4 left-0 right-0 text-center z-10">
                   <p className="text-white text-sm bg-black bg-opacity-50 px-4 py-2 rounded-full inline-block">
-                    請將QR碼置于掃描框內
+                    請將 QR 碼置於攤影機前
                   </p>
                 </div>
               </>
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-gray-400">
-                {hasPermission === false ? (
-                  <>
-                    <CameraOff className="w-16 h-16 mb-4" />
-                    <p className="text-center px-4">
-                      需要攝像頭權限才能使用掃描功能
-                    </p>
-                    <button
-                      onClick={checkCameraPermission}
-                      className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                    >
-                      重新獲取權限
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <Camera className="w-16 h-16 mb-4" />
-                    <p className="text-center px-4 mb-4">
-                      點擊開始掃描QR碼
-                    </p>
-                    <button
-                      onClick={startScanning}
-                      disabled={hasPermission === null}
-                      className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-                    >
-                      <ScanLine className="w-5 h-5" />
-                      <span>開始掃描</span>
-                    </button>
-                  </>
-                )}
+                <Camera className="w-16 h-16 mb-4" />
+                <p className="text-center px-4 mb-4">
+                  點擊開始掃描 QR 碼
+                </p>
+                <button
+                  onClick={() => setIsScanning(true)}
+                  className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center space-x-2"
+                >
+                  <ScanLine className="w-5 h-5" />
+                  <span>開始掃描</span>
+                </button>
               </div>
             )}
           </div>
@@ -254,7 +271,7 @@ export const Scan = () => {
           {isScanning && (
             <div className="p-4 bg-gray-50 text-center">
               <button
-                onClick={stopScanning}
+                onClick={() => setIsScanning(false)}
                 className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
               >
                 停止掃描

@@ -80,7 +80,14 @@ export class AttendeeService {
         }
 
         const attendee = this.attendeeRepository.create({
-            ...dto,
+            eventId: dto.event_id,
+            name: dto.name,
+            email: dto.email,
+            company: dto.company,
+            title: dto.title,
+            phone: dto.phone,
+            avatarUrl: dto.avatar_url,
+            badgeNumber: dto.badge_number,
             qrCodeToken: this.generateToken(),
         });
 
@@ -194,7 +201,36 @@ export class AttendeeService {
             },
         });
 
-        return attendee?.scanRecords || [];
+        if (!attendee || !attendee.scanRecords) {
+            return [];
+        }
+
+        // 格式化數據為前端期望的格式
+        const historyMap = new Map();
+        
+        attendee.scanRecords.forEach((scan) => {
+            const boothId = scan.boothId;
+            
+            if (!historyMap.has(boothId)) {
+                historyMap.set(boothId, {
+                    booth_id: scan.boothId,
+                    booth_name: scan.booth?.boothName || '未知攤位',
+                    booth_number: scan.booth?.boothNumber,
+                    booth_company: scan.booth?.company,
+                    scanned_at: scan.scannedAt,
+                    scan_count: 1,
+                });
+            } else {
+                const existing = historyMap.get(boothId);
+                existing.scan_count += 1;
+                // 保留最新的掃描時間
+                if (new Date(scan.scannedAt) > new Date(existing.scanned_at)) {
+                    existing.scanned_at = scan.scannedAt;
+                }
+            }
+        });
+
+        return Array.from(historyMap.values());
     }
 
     /**

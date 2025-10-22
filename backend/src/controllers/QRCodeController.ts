@@ -8,7 +8,7 @@ import {
     BadRequestError,
     NotFoundError,
 } from 'routing-controllers';
-import { Service } from 'typedi';
+import { Service, Container } from 'typedi';
 import { Response } from 'express';
 import { QRCodeService } from '../services';
 
@@ -22,7 +22,10 @@ import { QRCodeService } from '../services';
 @Service()
 @JsonController('/api/qrcode')
 export class QRCodeController {
-    constructor(private qrcodeService: QRCodeService) {}
+    // 使用 getter 延遲獲取 service，避免 DI 問題
+    private get qrcodeService(): QRCodeService {
+        return Container.get(QRCodeService);
+    }
 
     /**
      * @swagger

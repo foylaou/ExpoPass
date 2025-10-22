@@ -11,7 +11,7 @@ import metaMapPlugin from "vite-plugin-react-meta-map";
 // https://vite.dev/config/
 export default defineConfig({
     server: {
-        allowedHosts: ["e5a6afa5c835.ngrok-free.app"], // ✅ 明確寫出完整主機名稱
+        allowedHosts: ["01296ddfa1e9.ngrok-free.app"], // ✅ 明確寫出完整主機名稱
         proxy: {
             '/api': {
                 target: 'http://localhost:3000',

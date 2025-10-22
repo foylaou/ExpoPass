@@ -8,9 +8,13 @@ import {
   Eye,
   RefreshCw,
   Search,
-  Filter
+  Filter,
+  BarChart3,
+  CheckCircle
 } from 'lucide-react';
 import { useAppStore } from '../store';
+import { qrcodeServices } from '../services/QRCode/qrcodeServices';
+import type { QRCodeStats, BadgeData } from '../services/QRCode/qrcodeType';
 
 interface QRCodeItem {
   id: string;
@@ -23,11 +27,16 @@ interface QRCodeItem {
 }
 
 export const QRCodes = () => {
-  const { loading, setLoading } = useAppStore();
+  const { loading, setLoading, currentEvent } = useAppStore();
   const [qrCodes, setQrCodes] = useState<QRCodeItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'attendee' | 'booth'>('all');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [stats, setStats] = useState<QRCodeStats | null>(null);
+  const [previewBadge, setPreviewBadge] = useState<BadgeData | null>(null);
+  const [showStatsModal, setShowStatsModal] = useState(false);
+  const [verifyToken, setVerifyToken] = useState('');
+  const [verificationResult, setVerificationResult] = useState<any>(null);
 
   // 模擬QR碼數據
   const mockQRCodes: QRCodeItem[] = [
@@ -71,12 +80,17 @@ export const QRCodes = () => {
 
   useEffect(() => {
     void loadQRCodes();
-  }, []);
+  }, [currentEvent]);
 
   const loadQRCodes = async () => {
+    if (!currentEvent) {
+      setQrCodes([]);
+      return;
+    }
+
     try {
       setLoading(true);
-      // 模擬API調用
+      // 模擬API調用 - 根據選定的展覽載入QR碼
       setTimeout(() => {
         setQrCodes(mockQRCodes);
         setLoading(false);
@@ -121,12 +135,41 @@ export const QRCodes = () => {
   // 生成單個QR碼
   const generateQRCode = async (type: 'attendee' | 'booth', id: string) => {
     try {
-      // 模擬API調用
-      console.log(`生成${type === 'attendee' ? '參展者' : '攤位'}QR碼:`, id);
-      alert('QR碼生成成功！');
+      setLoading(true);
+      let result: Blob | any;
+      
+      if (type === 'attendee') {
+        result = await qrcodeServices.generateAttendeeQRCode({
+          id,
+          size: 300,
+          format: 'image'
+        });
+      } else {
+        result = await qrcodeServices.generateBoothQRCode({
+          id,
+          size: 300,
+          format: 'image'
+        });
+      }
+
+      if (result instanceof Blob) {
+        // 創建下載鏈接
+        const url = URL.createObjectURL(result);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `qrcode_${type}_${id}.png`;
+        link.click();
+        URL.revokeObjectURL(url);
+        alert('QR碼生成成功！');
+        await loadQRCodes();
+      } else if (result.success === false) {
+        alert(result.message || 'QR碼生成失敗');
+      }
     } catch (error) {
       console.error('Failed to generate QR code:', error);
       alert('QR碼生成失敗');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -138,12 +181,48 @@ export const QRCodes = () => {
     }
 
     try {
-      console.log('批量生成QR碼:', selectedItems);
+      setLoading(true);
+      const selectedQRCodes = qrCodes.filter(item => selectedItems.includes(item.id));
+      const attendeeItems = selectedQRCodes.filter(item => item.type === 'attendee');
+      const boothItems = selectedQRCodes.filter(item => item.type === 'booth');
+
+      if (!currentEvent) {
+        alert('請先選擇展覽');
+        return;
+      }
+
+      const eventId = currentEvent.id;
+
+      const promises: Promise<Blob>[] = [];
+
+      if (attendeeItems.length > 0) {
+        promises.push(qrcodeServices.batchGenerateAttendeeQRCodes({ eventId, size: 300 }));
+      }
+
+      if (boothItems.length > 0) {
+        promises.push(qrcodeServices.batchGenerateBoothQRCodes({ eventId, size: 300 }));
+      }
+
+      const results = await Promise.all(promises);
+      
+      // 下載所有生成的ZIP文件
+      results.forEach((blob, index) => {
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `qrcodes_batch_${index === 0 ? (attendeeItems.length > 0 ? 'attendees' : 'booths') : 'booths'}.zip`;
+        link.click();
+        URL.revokeObjectURL(url);
+      });
+
       alert(`成功生成 ${selectedItems.length} 個QR碼`);
       setSelectedItems([]);
+      await loadQRCodes();
     } catch (error) {
       console.error('Failed to batch generate QR codes:', error);
       alert('批量生成失敗');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -198,6 +277,68 @@ export const QRCodes = () => {
     printWindow?.print();
   };
 
+  // 預覽名牌資料
+  const previewBadgeData = async (id: string) => {
+    try {
+      setLoading(true);
+      const response = await qrcodeServices.getBadgeData(id);
+      if (response.success && response.data) {
+        setPreviewBadge(response.data);
+      } else {
+        alert(response.message || '獲取名牌資料失敗');
+      }
+    } catch (error) {
+      console.error('Failed to get badge data:', error);
+      alert('獲取名牌資料失敗');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 載入統計資料
+  const loadStats = async () => {
+    if (!currentEvent) {
+      alert('請先選擇展覽');
+      return;
+    }
+
+    try {
+      const response = await qrcodeServices.getQRCodeStats(currentEvent.id);
+      if (response.success && response.data) {
+        setStats(response.data);
+        setShowStatsModal(true);
+      } else {
+        alert(response.message || '獲取統計資料失敗');
+      }
+    } catch (error) {
+      console.error('Failed to get stats:', error);
+      alert('獲取統計資料失敗');
+    }
+  };
+
+  // 驗證Token
+  const handleVerifyToken = async () => {
+    if (!verifyToken.trim()) {
+      alert('請輸入要驗證的Token');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await qrcodeServices.verifyToken(verifyToken);
+      if (response.success && response.data) {
+        setVerificationResult(response.data);
+      } else {
+        alert(response.message || 'Token驗證失敗');
+      }
+    } catch (error) {
+      console.error('Failed to verify token:', error);
+      alert('Token驗證失敗');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -222,11 +363,22 @@ export const QRCodes = () => {
       {/* 頁面頭部 */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">QRCord管理</h1>
-          <p className="text-gray-600">生成和管理參展者與攤位的QR碼</p>
+          <h1 className="text-2xl font-bold text-gray-900">QR Code 管理</h1>
+          <p className="text-gray-600">
+            {currentEvent ? `展覽：${currentEvent.eventName}` : '請先在上方選擇展覽'}
+          </p>
         </div>
 
         <div className="flex flex-wrap gap-3">
+          <button
+            onClick={loadStats}
+            disabled={!currentEvent}
+            className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <BarChart3 className="w-4 h-4 mr-2" />
+            統計資料
+          </button>
+
           <button
             onClick={batchGenerateQRCodes}
             disabled={selectedItems.length === 0}
@@ -253,6 +405,42 @@ export const QRCodes = () => {
             刷新
           </button>
         </div>
+      </div>
+
+      {/* Token 驗證 */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">QR Code Token 驗證</h3>
+        <div className="flex flex-col sm:flex-row gap-4">
+          <input
+            type="text"
+            placeholder="輸入要驗證的Token..."
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            value={verifyToken}
+            onChange={(e) => setVerifyToken(e.target.value)}
+          />
+          <button
+            onClick={handleVerifyToken}
+            className="inline-flex items-center px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          >
+            <CheckCircle className="w-4 h-4 mr-2" />
+            驗證
+          </button>
+        </div>
+        {verificationResult && (
+          <div className={`mt-4 p-4 rounded-md ${verificationResult.valid ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+            <p className={`font-semibold ${verificationResult.valid ? 'text-green-800' : 'text-red-800'}`}>
+              {verificationResult.valid ? '✓ Token 有效' : '✗ Token 無效'}
+            </p>
+            {verificationResult.valid && verificationResult.info && (
+              <div className="mt-2 text-sm text-gray-700">
+                <p>類型: {verificationResult.type === 'attendee' ? '參展者' : '攤位'}</p>
+                <pre className="mt-2 bg-gray-100 p-2 rounded text-xs overflow-auto">
+                  {JSON.stringify(verificationResult.info, null, 2)}
+                </pre>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* 搜索和篩選 */}
@@ -424,8 +612,10 @@ export const QRCodes = () => {
                   </button>
 
                   <button
+                    onClick={() => item.type === 'attendee' && previewBadgeData(item.id)}
                     className="p-2 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-md transition-colors"
                     title="預覽"
+                    disabled={item.type !== 'attendee'}
                   >
                     <Eye className="w-4 h-4" />
                   </button>
@@ -443,6 +633,147 @@ export const QRCodes = () => {
           </div>
         )}
       </div>
+
+      {/* 統計資料 Modal */}
+      {showStatsModal && stats && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">QR Code 統計資料</h2>
+                <button
+                  onClick={() => setShowStatsModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <p className="text-sm text-blue-600 font-medium">總參展者數</p>
+                    <p className="text-3xl font-bold text-blue-900">{stats.total_attendees}</p>
+                  </div>
+                  <div className="bg-purple-50 p-4 rounded-lg">
+                    <p className="text-sm text-purple-600 font-medium">總攤位數</p>
+                    <p className="text-3xl font-bold text-purple-900">{stats.total_booths}</p>
+                  </div>
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <p className="text-sm text-green-600 font-medium">已生成 QR Code</p>
+                    <p className="text-3xl font-bold text-green-900">{stats.qr_codes_generated}</p>
+                  </div>
+                  <div className="bg-orange-50 p-4 rounded-lg">
+                    <p className="text-sm text-orange-600 font-medium">已掃描次數</p>
+                    <p className="text-3xl font-bold text-orange-900">{stats.qr_codes_scanned}</p>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-sm text-gray-600 font-medium mb-2">掃描率</p>
+                  <div className="relative pt-1">
+                    <div className="flex mb-2 items-center justify-between">
+                      <div>
+                        <span className="text-xs font-semibold inline-block text-blue-600">
+                          {(stats.scan_rate * 100).toFixed(1)}%
+                        </span>
+                      </div>
+                    </div>
+                    <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-blue-200">
+                      <div
+                        style={{ width: `${stats.scan_rate * 100}%` }}
+                        className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-600"
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={() => setShowStatsModal(false)}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+                >
+                  關閉
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 名牌預覽 Modal */}
+      {previewBadge && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">名牌預覽</h2>
+                <button
+                  onClick={() => setPreviewBadge(null)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="border-2 border-gray-300 rounded-lg p-6 space-y-4">
+                {/* QR Code */}
+                <div className="flex justify-center">
+                  <img
+                    src={previewBadge.qr_code_base64}
+                    alt="QR Code"
+                    className="w-48 h-48 border border-gray-200 rounded"
+                  />
+                </div>
+
+                {/* 名牌信息 */}
+                <div className="space-y-2 text-center">
+                  <h3 className="text-xl font-bold text-gray-900">{previewBadge.name}</h3>
+                  {previewBadge.title && (
+                    <p className="text-sm text-gray-600">{previewBadge.title}</p>
+                  )}
+                  {previewBadge.company && (
+                    <p className="text-sm font-medium text-gray-700">{previewBadge.company}</p>
+                  )}
+                  {previewBadge.badge_number && (
+                    <p className="text-sm text-gray-500">名牌號: {previewBadge.badge_number}</p>
+                  )}
+                  {previewBadge.email && (
+                    <p className="text-xs text-gray-500">{previewBadge.email}</p>
+                  )}
+                  {previewBadge.phone && (
+                    <p className="text-xs text-gray-500">{previewBadge.phone}</p>
+                  )}
+                  {previewBadge.event_name && (
+                    <p className="text-xs text-gray-400 mt-4">{previewBadge.event_name}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  onClick={() => setPreviewBadge(null)}
+                  className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors"
+                >
+                  關閉
+                </button>
+                <button
+                  onClick={() => {
+                    const link = document.createElement('a');
+                    link.href = previewBadge.qr_code_base64;
+                    link.download = `badge_${previewBadge.id}.png`;
+                    link.click();
+                  }}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  下載
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,4 +1,5 @@
 export { AttendeeController } from "./AttendeeController";
+export { AuthController } from "./AuthController";
 export { BoothController} from "./BoothController";
 export { DashboardController} from "./DashboardController";
 export { EventController } from './EventController';

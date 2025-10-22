@@ -1,3 +1,5 @@
+//frontend/src/services/Dashboard/dashboardType.ts
+
 /**
  * 儀表板總覽介面
  * @interface Dashboard
@@ -23,19 +25,23 @@ export interface Dashboard {
  * @interface Event
  * @description 定義活動的基本資料結構。
  * @property {string} id - 活動唯一識別碼
- * @property {string} event_name - 活動名稱
- * @property {string} event_code - 活動代碼
- * @property {string} start_date - 活動開始日期（YYYY-MM-DD）
- * @property {string} end_date - 活動結束日期（YYYY-MM-DD）
+ * @property {string} eventName - 活動名稱
+ * @property {string} eventCode - 活動代碼
+ * @property {string} startDate - 活動開始日期（YYYY-MM-DD）
+ * @property {string} endDate - 活動結束日期（YYYY-MM-DD）
  * @property {"upcoming"|"active"|"ended"} status - 活動狀態（未開始／進行中／已結束）
  */
-interface Event {
+export interface Event {
     id: string;
-    event_name: string;
-    event_code: string;
-    start_date: string;
-    end_date: string;
+    eventName: string;
+    eventCode: string;
+    startDate: string;
+    endDate: string;
+    location: string;
+    description: string;
     status: "upcoming" | "active" | "ended";
+    createdAt: string;
+    updatedAt: string;
 }
 
 /**
@@ -316,7 +322,7 @@ export interface AlertsDashboard {
  * @property {string} booth_id - 關聯的攤位 ID
  * @property {string} attendee_id - 關聯的參與者 ID
  */
-interface Alerts {
+export interface Alerts {
     type: string;
     level: string;
     title: string;

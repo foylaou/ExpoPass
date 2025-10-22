@@ -5,7 +5,8 @@ import { createObjectCsvWriter } from 'csv-writer';
 import { Response } from 'express';
 import { Event ,Attendee ,Booth ,ScanRecord,} from '../entities';
 import { AppDataSource } from '../config/data-source';
-import { AttendeeService ,BoothService } from './';
+import { AttendeeService } from './AttendeeService';
+import { BoothService } from './BoothService';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -15,15 +16,16 @@ export class ImportExportService {
     private attendeeRepository: Repository<Attendee>;
     private boothRepository: Repository<Booth>;
     private scanRepository: Repository<ScanRecord>;
-    
-    constructor(
-        private attendeeService: AttendeeService,
-        private boothService: BoothService
-    ) {
+    private attendeeService: AttendeeService;
+    private boothService: BoothService;
+
+    constructor() {
         this.eventRepository = AppDataSource.getRepository(Event);
         this.attendeeRepository = AppDataSource.getRepository(Attendee);
         this.boothRepository = AppDataSource.getRepository(Booth);
         this.scanRepository = AppDataSource.getRepository(ScanRecord);
+        this.attendeeService = new AttendeeService();
+        this.boothService = new BoothService();
     }
 
     /**
@@ -47,14 +49,14 @@ export class ImportExportService {
         }
 
         // 驗證必要欄位
-        const requiredFields = ['name'];
+        const requiredFields = ['姓名'];
         const firstRow = data[0];
         const hasRequiredFields = requiredFields.every((field) =>
             Object.keys(firstRow).some(key => key.toLowerCase().includes(field))
         );
 
         if (!hasRequiredFields) {
-            throw new Error('Missing required field: name');
+            throw new Error('Missing required field: 姓名');
         }
 
         // 處理資料並匯入
@@ -69,7 +71,7 @@ export class ImportExportService {
                 const row = data[i];
 
                 // 欄位映射（支援中英文）
-                const attendeeData = {
+                const attendeeData: any = {
                     event_id: eventId,
                     name: row.name || row['姓名'] || row.Name,
                     email: row.email || row['電子郵件'] || row.Email,
@@ -472,7 +474,7 @@ export class ImportExportService {
     /**
      * 取得匯入範本
      */
-    getImportTemplate(type: 'attendees' | 'booths', res: Response) {
+    async getImportTemplate(type: 'attendees' | 'booths', res: Response) {
         const workbook = XLSX.utils.book_new();
 
         if (type === 'attendees') {

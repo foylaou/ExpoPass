@@ -12,61 +12,22 @@ import {
   Edit,
   Trash2,
   QrCode,
-  Filter
+  Filter,
+  FileDown
 } from 'lucide-react';
-import { useAppStore } from '../store';
-import { attendeeApi } from '../utils/api';
-import type {Attendee} from '../types';
+import { useAppStore } from '../../store';
+import { attendeesServices } from '../../services/Attendees/attendeesServices.ts';
+import type { Attendee } from '../../services/Attendees/attendeesType.ts';
+import { importServices, exportServices, downloadFile } from '../../services/Import-Export/import-exportServices.ts';
+import toast from 'react-hot-toast';
 
 export const Attendees = () => {
   const { setLoading, loading, currentEvent } = useAppStore();
   const [attendees, setAttendees] = useState<Attendee[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [companyFilter, setCompanyFilter] = useState('');
+  const [useServerSearch, setUseServerSearch] = useState(false);
 
-  // 模拟数据
-  const mockAttendees: Attendee[] = [
-    {
-      id: '1',
-      name: '王小明',
-      email: 'wang@example.com',
-      company: 'ABC科技公司',
-      title: '技術總監',
-      phone: '0912-345-678',
-      qrCodeToken: 'ATT001',
-      badgeNumber: 'B001'
-    },
-    {
-      id: '2',
-      name: '李美華',
-      email: 'li@xyz.com',
-      company: 'XYZ企業',
-      title: '營銷經理',
-      phone: '0987-654-321',
-      qrCodeToken: 'ATT002',
-      badgeNumber: 'B002'
-    },
-    {
-      id: '3',
-      name: '陳志強',
-      email: 'chen@techcorp.com',
-      company: '科技公司',
-      title: 'CEO',
-      phone: '0911-111-222',
-      qrCodeToken: 'ATT003',
-      badgeNumber: 'B003'
-    },
-    {
-      id: '4',
-      name: '林雅婷',
-      email: 'lin@startup.tw',
-      company: '新創公司',
-      title: '產品經理',
-      phone: '0922-333-444',
-      qrCodeToken: 'ATT004',
-      badgeNumber: 'B004'
-    }
-  ];
 
   // 获取参展者列表
   const loadAttendees = async () => {
@@ -74,15 +35,19 @@ export const Attendees = () => {
       setLoading(true);
 
       if (currentEvent) {
-        const data = await attendeeApi.getAll(currentEvent.id);
-        setAttendees(data);
+        const response = await attendeesServices.GetAllAttendees({ eventId: currentEvent.id });
+        if (response.success && response.data) {
+          setAttendees(response.data.attendees || []);
+        } else {
+          throw new Error(response.message || '獲取參展者列表失敗');
+        }
       } else {
-        // 使用模拟数据
-        setAttendees(mockAttendees);
+        // 沒有選擇展覽時設為空陣列
+        setAttendees([]);
       }
     } catch (error) {
       console.error('Failed to load attendees:', error);
-      setAttendees(mockAttendees);
+      setAttendees([]);
     } finally {
       setLoading(false);
     }
@@ -92,17 +57,50 @@ export const Attendees = () => {
     loadAttendees();
   }, [currentEvent]);
 
-  // 筛选参展者
+  // 搜尋功能：使用後端API搜尋
+  useEffect(() => {
+    const searchAttendees = async () => {
+      if (!searchQuery.trim() || !currentEvent) {
+        setUseServerSearch(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setUseServerSearch(true);
+        const response = await attendeesServices.GetSearchAttendee({
+          eventId: currentEvent.id,
+          keywords: searchQuery
+        });
+        if (response.success && response.data) {
+          setAttendees(response.data.attendees || []);
+        }
+      } catch (error) {
+        console.error('Failed to search attendees:', error);
+        toast.error('搜尋失敗');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // 防抖處理
+    const timeoutId = setTimeout(() => {
+      if (searchQuery.trim()) {
+        searchAttendees();
+      } else {
+        setUseServerSearch(false);
+        loadAttendees();
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
+
+
+  // 筛选参展者（僅針對公司過濾）
   const filteredAttendees = attendees.filter(attendee => {
-    const matchesSearch =
-      attendee.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      attendee.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      attendee.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      attendee.badgeNumber?.toLowerCase().includes(searchQuery.toLowerCase());
-
     const matchesCompany = !companyFilter || attendee.company === companyFilter;
-
-    return matchesSearch && matchesCompany;
+    return matchesCompany;
   });
 
   // 获取所有公司列表
@@ -111,41 +109,107 @@ export const Attendees = () => {
   // 删除参展者
   const handleDelete = async (id: string) => {
     if (window.confirm('确定要删除此参展者吗？')) {
-      setAttendees(attendees.filter(a => a.id !== id));
+      try {
+        setLoading(true);
+        const response = await attendeesServices.DeleteAttendee(id);
+        if (response.success) {
+          setAttendees(attendees.filter(a => a.id !== id));
+        } else {
+          alert(response.message || '刪除失敗');
+        }
+      } catch (error) {
+        console.error('Failed to delete attendee:', error);
+        alert('刪除參展者時發生錯誤');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
   // 批量导入
   const handleImport = () => {
-    // 创建文件输入元素
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.xlsx,.xls,.csv';
-    input.onchange = (e) => {
+    input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        console.log('导入文件:', file.name);
-        // 这里处理文件导入逻辑
-        alert('文件导入功能开发中...');
+      if (!file) return;
+
+      if (!currentEvent) {
+        toast.error('請先選擇活動');
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const response = await importServices.importAttendees({
+          eventId: currentEvent.id,
+          file: file
+        });
+
+        if (response.success && response.data) {
+          const result = response.data;
+          if (result.failed > 0 && result.errors) {
+            // 有錯誤時顯示詳細資訊
+            toast.success(
+              `導入完成：成功 ${result.success} 筆，失敗 ${result.failed} 筆`,
+              { duration: 5000 }
+            );
+            console.warn('匯入錯誤:', result.errors);
+          } else {
+            toast.success(`成功導入 ${result.success} 筆參展者資料`);
+          }
+          loadAttendees(); // 重新載入數據
+        } else {
+          toast.error(response.message || '批量導入失敗');
+        }
+      } catch (error) {
+        console.error('Failed to import attendees:', error);
+        toast.error('導入檔案時發生錯誤');
+      } finally {
+        setLoading(false);
       }
     };
     input.click();
   };
 
-  // 导出数据
-  const handleExport = () => {
-    const csvContent = [
-      'Name,Email,Company,Title,Phone,Badge Number',
-      ...filteredAttendees.map(a =>
-        `"${a.name}","${a.email || ''}","${a.company || ''}","${a.title || ''}","${a.phone || ''}","${a.badgeNumber || ''}"`
-      )
-    ].join('\n');
+  // 下載匯入範本
+  const handleDownloadTemplate = async () => {
+    try {
+      setLoading(true);
+      const blob = await exportServices.getImportTemplate({ type: 'attendees' });
+      downloadFile(blob, 'attendees_template.xlsx');
+      toast.success('範本下載成功');
+    } catch (error) {
+      console.error('Failed to download template:', error);
+      toast.error('下載範本失敗');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `attendees_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
+  // 导出数据
+  const handleExport = async () => {
+    if (!currentEvent) {
+      toast.error('請先選擇活動');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const blob = await exportServices.exportAttendees({
+        eventId: currentEvent.id,
+        format: 'xlsx'
+      });
+      const filename = `attendees_${currentEvent.name}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      downloadFile(blob, filename);
+      toast.success('匯出成功');
+    } catch (error) {
+      console.error('Failed to export attendees:', error);
+      toast.error('匯出失敗');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (loading) {
@@ -176,6 +240,15 @@ export const Attendees = () => {
         </div>
 
         <div className="flex flex-wrap gap-3">
+          <button
+            onClick={handleDownloadTemplate}
+            className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
+            title="下載匯入範本"
+          >
+            <FileDown className="w-4 h-4 mr-2" />
+            範本
+          </button>
+
           <button
             onClick={handleImport}
             className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"

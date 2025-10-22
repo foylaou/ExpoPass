@@ -228,18 +228,29 @@ export class EventController {
    *           format: uuid
    *         description: 展覽活動ID
    *     responses:
-   *       204:
+   *       200:
    *         description: 成功刪除展覽活動
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                   example: true
+   *                 message:
+   *                   type: string
+   *                   example: 成功刪除展覽活動
    *       404:
    *         description: 找不到展覽活動
    */
   @Delete('/:id')
-  @HttpCode(204)
-  async deleteEvent(@Param('id') id: string): Promise<void> {
+  async deleteEvent(@Param('id') id: string): Promise<{ success: boolean; message: string }> {
     const deleted = await this.eventService.delete(id);
     if (!deleted) {
       throw new NotFoundError('展覽活動不存在');
     }
+    return { success: true, message: '成功刪除展覽活動' };
   }
 
   /**

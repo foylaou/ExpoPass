@@ -1,4 +1,5 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
 import {
   LayoutDashboard,
   Calendar,
@@ -8,27 +9,66 @@ import {
   ScanLine,
   BarChart3,
   Menu,
-  X
+  X,
+  ChevronDown,
+  LogOut
 } from 'lucide-react';
-import { useAppStore } from '../store';
+import { useAppStore, useEventStore } from '../store';
+import { eventsServices } from '../services/Events/eventsServices';
+import { useAuth } from '../contexts/AuthContext';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 const menuItems = [
-  { path: '/dashboard', icon: LayoutDashboard, label: '儀表板' },
-  { path: '/events', icon: Calendar, label: '參展管理' },
-  { path: '/attendees', icon: Users, label: '參展者' },
-  { path: '/booths', icon: Building2, label: '攤位管理' },
-  { path: '/qrcodes', icon: QrCode, label: 'QRCode 生成' },
-  { path: '/scan', icon: ScanLine, label: '掃描QRCode' },
-  { path: '/reports', icon: BarChart3, label: '報表系統' },
+  { path: '/dashboard', icon: LayoutDashboard, label: '儀表板', roles: ['admin', 'attendee', 'booth'] },
+  { path: '/events', icon: Calendar, label: '參展管理', roles: ['admin'] },
+  { path: '/attendees', icon: Users, label: '參展者', roles: ['admin'] },
+  { path: '/booths', icon: Building2, label: '攤位管理', roles: ['admin'] },
+  { path: '/qrcodes', icon: QrCode, label: 'QRCode 生成', roles: ['admin'] },
+  { path: '/scan', icon: ScanLine, label: '掃描QRCode', roles: ['admin'] },
+  { path: '/reports', icon: BarChart3, label: '報表系統', roles: ['admin'] },
 ];
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
-  const { sidebarOpen, setSidebarOpen } = useAppStore();
+  const navigate = useNavigate();
+  const { sidebarOpen, setSidebarOpen, currentEvent, setCurrentEvent } = useAppStore();
+  const { events, setEvents } = useEventStore();
+  const { user, logout } = useAuth();
+
+  // 根據使用者角色過濾選單項目
+  const filteredMenuItems = menuItems.filter(item =>
+    item.roles.includes(user?.role || '')
+  );
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  // 載入活動列表
+  useEffect(() => {
+    const loadEvents = async () => {
+      try {
+        const response = await eventsServices.GetAllEvent();
+        if (response.success && response.data) {
+          setEvents(response.data);
+          // 如果還沒有選擇活動，自動選擇第一個 active 或 upcoming 的活動
+          if (!currentEvent && response.data.length > 0) {
+            const activeEvent = response.data.find(e => e.status === 'active') ||
+                               response.data.find(e => e.status === 'upcoming') ||
+                               response.data[0];
+            setCurrentEvent(activeEvent);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load events:', error);
+      }
+    };
+    loadEvents();
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -56,8 +96,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         </div>
 
         {/* Nav */}
-        <nav className="mt-6">
-          {menuItems.map((item) => {
+        <nav className="mt-6 flex-1">
+          {filteredMenuItems.map((item) => {
             const isActive = location.pathname.startsWith(item.path);
             const Icon = item.icon;
 
@@ -78,6 +118,25 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             );
           })}
         </nav>
+
+        {/* User Info & Logout */}
+        <div className="border-t p-4 space-y-2">
+          <div className="px-4 py-2">
+            <p className="text-xs text-gray-500">目前登入為</p>
+            <p className="text-sm font-semibold text-gray-800">{user?.name || '使用者'}</p>
+            <p className="text-xs text-gray-500">
+              {user?.role === 'admin' ? '管理者' :
+               user?.role === 'booth' ? '攤位' : '參展者'}
+            </p>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="flex items-center space-x-2 w-full mx-0 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+          >
+            <LogOut className="w-5 h-5" />
+            <span>登出</span>
+          </button>
+        </div>
       </div>
 
       {/* Main */}
@@ -93,8 +152,48 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             </button>
 
             <div className="flex items-center space-x-4">
-              {/* put Avater or Alert */}
-              <div className="text-sm text-gray-600">
+              {/* 活動選擇下拉選單 - 僅管理者可見 */}
+              {user?.role === 'admin' && (
+                <div className="relative flex items-center space-x-2">
+                  {currentEvent && (
+                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                      currentEvent.status === 'active' ? 'bg-green-100 text-green-800' :
+                      currentEvent.status === 'upcoming' ? 'bg-blue-100 text-blue-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {currentEvent.status === 'active' ? '進行中' :
+                       currentEvent.status === 'upcoming' ? '即將開始' : '已結束'}
+                    </span>
+                  )}
+                  <div className="relative">
+                    <select
+                      value={currentEvent?.id || ''}
+                      onChange={(e) => {
+                        const selected = events.find(event => event.id === e.target.value);
+                        setCurrentEvent(selected || null);
+                      }}
+                      className="appearance-none bg-white border border-gray-300 rounded-md pl-3 pr-10 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer min-w-[200px]"
+                    >
+                      <option value="">選擇活動...</option>
+                      {events.map((event) => (
+                        <option key={event.id} value={event.id}>
+                          {event.eventName}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  </div>
+                </div>
+              )}
+
+              {/* 使用者資訊顯示 */}
+              <div className="text-sm text-gray-600 hidden lg:block">
+                <span className="font-medium">{user?.name}</span>
+                {user?.company && <span className="ml-2 text-gray-400">({user.company})</span>}
+              </div>
+
+              {/* 時間顯示 */}
+              <div className="text-sm text-gray-600 hidden lg:block">
                 {new Date().toLocaleString('zh-TW')}
               </div>
             </div>

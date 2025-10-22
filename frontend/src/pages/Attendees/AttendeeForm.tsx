@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Save, ArrowLeft, Users, Mail, Phone, Building, User, Hash } from 'lucide-react';
-import { useAppStore } from '../store';
+import { useAppStore } from '../../store';
 import toast from "react-hot-toast";
+import { attendeesServices } from '../../services/Attendees/attendeesServices.ts';
+import type { Attendee } from '../../services/Attendees/attendeesType.ts';
 
 
 export const AttendeeForm = () => {
@@ -34,38 +36,33 @@ export const AttendeeForm = () => {
   const loadAttendee = async (attendeeId: string) => {
     try {
       setLoading(true);
-      // 这里应该调用真实API
-      // const attendee = await attendeeApi.getById(attendeeId);
-
-      // 模拟数据
-      const mockAttendee = {
-        id: attendeeId,
-        name: '王小明',
-        email: 'wang@example.com',
-        phone: '0912-345-678',
-        company: 'ABC科技公司',
-        title: 'PM',
-        badgeNumber: 'B001'
-      };
-
-      setFormData({
-        name: mockAttendee.name,
-        email: mockAttendee.email,
-        phone: mockAttendee.phone || '',
-        company: mockAttendee.company || '',
-        title: mockAttendee.title || '',
-        badgeNumber: mockAttendee.badgeNumber || ''
-      });
+      const response = await attendeesServices.GetAttendeeById(attendeeId);
+      
+      if (response.success && response.data) {
+        const attendee = response.data;
+        setFormData({
+          name: attendee.name,
+          email: attendee.email || '',
+          phone: attendee.phone || '',
+          company: attendee.company || '',
+          title: attendee.title || '',
+          badgeNumber: attendee.badgeNumber || ''
+        });
+      } else {
+        toast.error(response.message || '載入參展者資訊失敗');
+        navigate('/attendees');
+      }
     } catch (error) {
       console.error('Failed to load attendee:', error);
-    toast.error("載入参展者資訊失敗")
+      toast.error("載入參展者資訊失敗");
+      navigate('/attendees');
     } finally {
       setLoading(false);
     }
   };
 
   const generateBadgeNumber = () => {
-    // 生成名牌号：B + 4位随机数字
+    // 生成名牌號：B + 4位隨機數字
     const badgeNumber = `B${Math.floor(1000 + Math.random() * 9000)}`;
     setFormData(prev => ({ ...prev, badgeNumber }));
   };
@@ -74,7 +71,7 @@ export const AttendeeForm = () => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
 
-    // 清除该字段的错误
+    // 清除該字段的錯誤
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -88,17 +85,17 @@ export const AttendeeForm = () => {
     }
 
     if (!formData.email.trim()) {
-      newErrors.email = '请输入邮箱地址';
+      newErrors.email = '請輸入郵箱地址';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = '请输入有效的邮箱地址';
+      newErrors.email = '請輸入有效的郵箱地址';
     }
 
     if (!formData.badgeNumber.trim()) {
-      newErrors.badgeNumber = '请输入名牌号';
+      newErrors.badgeNumber = '請輸入名牌號';
     }
 
     if (formData.phone && !/^[\d\-\+\(\)\s]+$/.test(formData.phone)) {
-      newErrors.phone = '请输入有效的电话号码';
+      newErrors.phone = '請輸入有效的電話號碼';
     }
 
     setErrors(newErrors);
@@ -113,49 +110,70 @@ export const AttendeeForm = () => {
     }
 
     if (!currentEvent) {
-      alert('请先选择活动');
+      alert('請先選擇活動');
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      const attendeeData = {
-        ...formData,
-        eventId: currentEvent.id,
-        qrCodeToken: `ATT${Date.now()}` // 生成QR码令牌
-      };
-
       if (isEdit && id) {
         // 更新参展者
-        // await attendeeApi.update(id, attendeeData);
-        console.log('模拟更新参展者:', attendeeData);
-        alert('参展者信息更新成功！');
+        const updateData: Attendee = {
+          id: id,
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          company: formData.company,
+          title: formData.title,
+          badgeNumber: formData.badgeNumber,
+          qrCodeToken: '' // 更新時不需要修改 token
+        };
+        
+        const response = await attendeesServices.UpdateAttendee(id, updateData);
+        if (response.success) {
+          toast.success('參展者資訊更新成功！');
+          navigate('/attendees');
+        } else {
+          toast.error(response.message || '更新失敗');
+        }
       } else {
         // 创建参展者
-        // await attendeeApi.create(attendeeData);
-        console.log('模拟创建参展者:', attendeeData);
-        alert('参展者添加成功！');
+        const createData = {
+          eventId: currentEvent.id,
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          company: formData.company,
+          title: formData.title,
+          badgeNumber: formData.badgeNumber
+        };
+        
+        const response = await attendeesServices.CreateNewAttendee(createData);
+        if (response.success) {
+          toast.success('參展者新增成功！');
+          navigate('/attendees');
+        } else {
+          toast.error(response.message || '新增失敗');
+        }
       }
-
-      navigate('/attendees');
     } catch (error: any) {
       console.error('Failed to save attendee:', error);
-      alert(`保存失败: ${error.message || '未知错误'}`);
+      toast.error(`保存失敗: ${error.message || '未知错误'}`);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleCancel = () => {
-    if (window.confirm('确定要取消吗？未保存的更改将丢失。')) {
+    if (window.confirm('確定要取消嗎？未保存的更改將丟失。')) {
       navigate('/attendees');
     }
   };
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* 页面头部 */}
+      {/* 頁面頭部 */}
       <div className="flex items-center space-x-4">
         <button
           onClick={() => navigate('/attendees')}
@@ -165,15 +183,15 @@ export const AttendeeForm = () => {
         </button>
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            {isEdit ? '编辑参展者' : '添加参展者'}
+            {isEdit ? '編輯參展者' : '添加參展者'}
           </h1>
           <p className="text-gray-600">
-            {isEdit ? '修改参展者信息' : '填写参展者基本信息'}
+            {isEdit ? '修改參展者信息' : '填寫參展者基本信息'}
           </p>
         </div>
       </div>
 
-      {/* 表单卡片 */}
+      {/* 表單卡片 */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* 基本信息 */}
@@ -197,17 +215,17 @@ export const AttendeeForm = () => {
                   className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                     errors.name ? 'border-red-300' : 'border-gray-300'
                   }`}
-                  placeholder="请输入参展者姓名"
+                  placeholder="請輸入參展者姓名"
                 />
                 {errors.name && (
                   <p className="mt-1 text-sm text-red-600">{errors.name}</p>
                 )}
               </div>
 
-              {/* 邮箱 */}
+              {/* 郵箱 */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  邮箱 <span className="text-red-500">*</span>
+                  郵箱 <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -219,7 +237,7 @@ export const AttendeeForm = () => {
                     className={`w-full pl-10 pr-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                       errors.email ? 'border-red-300' : 'border-gray-300'
                     }`}
-                    placeholder="请输入邮箱地址"
+                    placeholder="請輸入郵箱地址"
                   />
                 </div>
                 {errors.email && (
@@ -229,10 +247,10 @@ export const AttendeeForm = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-              {/* 电话 */}
+              {/* 電話 */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  电话
+                  電話
                 </label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -244,7 +262,7 @@ export const AttendeeForm = () => {
                     className={`w-full pl-10 pr-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                       errors.phone ? 'border-red-300' : 'border-gray-300'
                     }`}
-                    placeholder="请输入电话号码"
+                    placeholder="請輸入電話號碼"
                   />
                 </div>
                 {errors.phone && (
@@ -252,10 +270,10 @@ export const AttendeeForm = () => {
                 )}
               </div>
 
-              {/* 名牌号 */}
+              {/* 名牌號 */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  名牌号 <span className="text-red-500">*</span>
+                  名牌號 <span className="text-red-500">*</span>
                 </label>
                 <div className="flex">
                   <div className="relative flex-1">
@@ -268,7 +286,7 @@ export const AttendeeForm = () => {
                       className={`w-full pl-10 pr-3 py-2 border rounded-l-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                         errors.badgeNumber ? 'border-red-300' : 'border-gray-300'
                       }`}
-                      placeholder="请输入名牌号"
+                      placeholder="請輸入名牌號"
                     />
                   </div>
                   <button
@@ -294,10 +312,10 @@ export const AttendeeForm = () => {
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* 公司名称 */}
+              {/* 公司名稱 */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  公司名称
+                  公司名稱
                 </label>
                 <input
                   type="text"
@@ -305,14 +323,14 @@ export const AttendeeForm = () => {
                   value={formData.company}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="请输入公司名称"
+                  placeholder="請輸入公司名稱"
                 />
               </div>
 
-              {/* 职位 */}
+              {/* 職位 */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  职位
+                  職位
                 </label>
                 <input
                   type="text"
@@ -320,13 +338,13 @@ export const AttendeeForm = () => {
                   value={formData.title}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="请输入职位"
+                  placeholder="請輸入職位"
                 />
               </div>
             </div>
           </div>
 
-          {/* 提交按钮 */}
+          {/* 提交按鈕 */}
           <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
             <button
               type="button"
@@ -342,7 +360,7 @@ export const AttendeeForm = () => {
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 transition-colors"
             >
               <Save className="w-4 h-4" />
-              <span>{isSubmitting ? '保存中...' : (isEdit ? '更新' : '创建')}</span>
+              <span>{isSubmitting ? '保存中...' : (isEdit ? '更新' : '創建')}</span>
             </button>
           </div>
         </form>
@@ -353,12 +371,12 @@ export const AttendeeForm = () => {
         <div className="flex items-start">
           <Users className="w-5 h-5 text-blue-600 mt-0.5 mr-2" />
           <div>
-            <h4 className="text-sm font-medium text-blue-900 mb-1">温馨提示</h4>
+            <h4 className="text-sm font-medium text-blue-900 mb-1">溫馨提示</h4>
             <ul className="text-sm text-blue-800 space-y-1">
-              <li>• 姓名和邮箱为必填项，用于生成QR码和联系</li>
-              <li>• 名牌号用于现场识别，建议使用唯一编号</li>
-              <li>• 电话和公司信息可选填，便于后续联系</li>
-              <li>• 保存后系统将自动生成专属QR码</li>
+              <li>• 姓名和郵箱為必填項，用于生成QR碼和聯系</li>
+              <li>• 名牌號用于現場識別，建議使用唯一編號</li>
+              <li>• 電話和公司信息可選填，便于后續聯系</li>
+              <li>• 保存后系統將自動生成專屬QR碼</li>
             </ul>
           </div>
         </div>

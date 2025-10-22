@@ -10,9 +10,9 @@ import {
   Trash2,
   Eye
 } from 'lucide-react';
-import { useEventStore, useAppStore } from '../store';
-import { eventApi } from '../utils/api';
-import type {Event} from '../types';
+import {eventsServices} from "../../services/Events/eventsServices.ts";
+import {useAppStore, useEventStore} from "../../store";
+import type {Event} from "../../services/Events/eventsType.ts";
 
 export const Events = () => {
   const { events, setEvents } = useEventStore();
@@ -20,29 +20,20 @@ export const Events = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'upcoming' | 'active' | 'ended'>('all');
 
-  // 加载展览列表
+  // 加載展覽列表
   const loadEvents = async () => {
     try {
       setLoading(true);
-      const data = await eventApi.getAll();
-      setEvents(data);
+      const response = await eventsServices.GetAllEvent();
+      if (response.success && response.data) {
+        setEvents(response.data);
+      } else {
+        throw new Error(response.message || '獲取活動列表失敗');
+      }
     } catch (error) {
       console.error('Failed to load events:', error);
-      // 使用模拟数据
-      setEvents([
-        {
-          id: '1',
-          eventName: '2025 智慧媒合展覽',
-          eventCode: 'TECH2025',
-          startDate: '2024-03-01',
-          endDate: '2024-03-03',
-          location: '高雄衛武營',
-          description: '展示石化業與智慧化業者解方',
-          status: 'active',
-          createdAt: '2024-02-01T00:00:00Z',
-          updatedAt: '2024-02-01T00:00:00Z'
-        },
-      ]);
+      // 出錯時設為空陣列
+      setEvents([]);
     } finally {
       setLoading(false);
     }
@@ -52,7 +43,7 @@ export const Events = () => {
     void loadEvents();
   }, []);
 
-  // 筛选展览
+  // 篩選展覽
   const filteredEvents = events.filter(event => {
     const matchesSearch = event.eventName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                          event.eventCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -63,7 +54,7 @@ export const Events = () => {
     return matchesSearch && matchesStatus;
   });
 
-  // 状态样式
+  // 狀態樣式
   const getStatusStyle = (status: Event['status']) => {
     switch (status) {
       case 'active':
@@ -86,12 +77,16 @@ export const Events = () => {
     }
   };
 
-  // 删除展览
+  // 刪除展覽
   const handleDelete = async (id: string) => {
     if (window.confirm('確定要刪除此展覽嗎？此操作不可撤銷。')) {
       try {
-        await eventApi.delete(id);
-        setEvents(events.filter(event => event.id !== id));
+        const response = await eventsServices.deleteEvent(id);
+        if (response.success) {
+          setEvents(events.filter(event => event.id !== id));
+        } else {
+          throw new Error(response.message || '刪除失敗');
+        }
       } catch (error) {
         console.error('Failed to delete event:', error);
         alert('刪除失敗，請稍后重試');
@@ -169,7 +164,7 @@ export const Events = () => {
         </div>
       </div>
 
-      {/* 展览列表 */}
+      {/* 展覽列表 */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         {filteredEvents.length === 0 ? (
           <div className="text-center py-12">
@@ -230,7 +225,7 @@ export const Events = () => {
                     </div>
                   </div>
 
-                  {/* 操作按钮 */}
+                  {/* 操作按鈕 */}
                   <div className="flex items-center space-x-2 ml-4">
                     <Link
                       to={`/events/${event.id}`}
@@ -243,7 +238,7 @@ export const Events = () => {
                     <Link
                       to={`/events/${event.id}/edit`}
                       className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-md transition-colors"
-                      title="编辑"
+                      title="編輯"
                     >
                       <Edit className="w-4 h-4" />
                     </Link>
@@ -251,7 +246,7 @@ export const Events = () => {
                     <button
                       onClick={() => handleDelete(event.id)}
                       className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                      title="删除"
+                      title="刪除"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -263,7 +258,7 @@ export const Events = () => {
         )}
       </div>
 
-      {/* 统计信息 */}
+      {/* 統計信息 */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">統計資訊</h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -287,7 +282,7 @@ export const Events = () => {
             <div className="text-2xl font-bold text-gray-600">
               {events.filter(e => e.status === 'ended').length}
             </div>
-            <div className="text-sm text-gray-500">已结束</div>
+            <div className="text-sm text-gray-500">已結束</div>
           </div>
         </div>
       </div>

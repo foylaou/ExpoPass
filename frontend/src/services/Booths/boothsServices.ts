@@ -1,5 +1,6 @@
-import axios from "axios";
-import type {ApiResponse} from "../../types";
+//frontend/src/services/Booths/boothsServices.ts
+import axios from 'axios';
+import type {ApiResponse} from "../apiTypes";
 import type {
     BatchCreateBoothsRequest, BatchUpdateBoothsResponse,
     Booths,
@@ -12,8 +13,9 @@ import type {
 
 
 const service_name: string = "booths"
-const API_URL: string = import.meta.env.API_URL || "http://localhost:3000/api/" || "http://localhost:5173/api/";
+const API_URL: string = import.meta.env.VITE_API_URL || "/api";
 const API: string = `${API_URL}/${service_name}`;
+console.log(`[boothsServices] API URL: ${API}`);
 const api = axios.create({
     baseURL: `${API}`,  // API請求的基礎路徑
     timeout: 10000, // 超時設置
@@ -35,6 +37,21 @@ export const boothsServices = {
             const response = await api.get(`${query}`, {
                 headers: { 'Content-Type': 'application/json' },
             });
+            
+            // 檢查回應格式
+            if (Array.isArray(response.data)) {
+                // 後端直接返回陣列
+                console.log(`[GetAllBooths] 成功獲取 ${response.data.length} 個攤位`);
+                return { success: true, data: response.data };
+            } else if (response.data && typeof response.data === 'object') {
+                // 後端返回包裝的物件
+                if (response.data.success !== undefined) {
+                    return response.data;
+                } else if (response.data.data) {
+                    return { success: true, data: response.data.data };
+                }
+            }
+            
             return response.data;
         } catch (e) {
             console.error(`GetAllBooths Error:`, e);
@@ -106,7 +123,7 @@ export const boothsServices = {
      */
     async GetBoothStats(id: string): Promise<ApiResponse<GetBoothStatsResponse>> {
         try {
-            const response = await api.get(`stats/${encodeURIComponent(id)}`, {
+            const response = await api.get(`/${encodeURIComponent(id)}/stats`, {
                 headers: { 'Content-Type': 'application/json' },
             });
             return response.data;
@@ -128,7 +145,7 @@ export const boothsServices = {
      */
     async GetBoothVisitors(id: string): Promise<ApiResponse<GetBoothVisitorsResponse[]>> {
         try {
-            const response = await api.get(`visitors/${encodeURIComponent(id)}`, {
+            const response = await api.get(`/${encodeURIComponent(id)}/visitors`, {
                 headers: { 'Content-Type': 'application/json' },
             });
             return response.data;
@@ -236,13 +253,29 @@ export const boothsServices = {
      */
     async GetBoothById(id: string): Promise<ApiResponse<Booths>> {
         try {
-            const response = await api.get(`${encodeURIComponent(id)}`, {
+            console.log(`[GetBoothById] 請求 URL: /${id}`);
+            const response = await api.get(`/${encodeURIComponent(id)}`, {
                 headers: { 'Content-Type': 'application/json' },
             });
+            console.log('[GetBoothById] 回應:', response);
+            console.log('[GetBoothById] 回應資料:', response.data);
+            
+            // 檢查回應格式
+            if (response.data && typeof response.data === 'object') {
+                if (response.data.success !== undefined) {
+                    return response.data;
+                } else if (response.data.id) {
+                    // 後端直接返回攤位物件
+                    return { success: true, data: response.data };
+                }
+            }
+            
             return response.data;
-        } catch (e) {
+        } catch (e: any) {
             console.error(`GetBoothById Error:`, e);
-            return { success: false, message: "取得攤位失敗，請稍後再試。" };
+            console.error(`Error response:`, e.response?.data);
+            console.error(`Error status:`, e.response?.status);
+            return { success: false, message: e.response?.data?.message || "取得攤位失敗，請稍後再試。" };
         }
     },
 

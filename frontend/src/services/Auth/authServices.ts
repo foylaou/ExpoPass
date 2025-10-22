@@ -1,10 +1,10 @@
 import axios from "axios";
-import type {ApiResponse} from "../../types";
+import type {ApiResponse} from "../apiTypes";
 import type {adminLoginRequest} from "./authType.ts";
 
 
 const service_name: string = "auth"
-const API_URL: string = import.meta.env.API_URL || "http://localhost:3000/api/" || "http://localhost:5173/api/";
+const API_URL: string = import.meta.env.API_URL || "/api" || "http://localhost:5173/api";
 const API: string = `${API_URL}/${service_name}`;
 const api = axios.create({
     baseURL: `${API}`,  // API請求的基礎路徑
@@ -47,7 +47,7 @@ export const authServices = {
      */
     async adminLogin(data: adminLoginRequest): Promise<ApiResponse<string>> {
         try {
-            const response = await api.post(`adminLogin`, data
+            const response = await api.post(`/admin/login`, data
                 , {
                     headers: {
                         "Content-Type": "application/json",

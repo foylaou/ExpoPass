@@ -1,88 +1,85 @@
 import { create } from 'zustand';
-import type {Alert, DashboardStats, LiveData, Event} from "../types";
+import type { Dashboard, LiveDashboard, Alerts, Event } from '../services/Dashboard/dashboardType';
 
-// 全局应用状态
+// 全局應用狀態
 interface AppStore {
-  // 当前选中的展览
-  currentEvent: Event | null;
-  setCurrentEvent: (event: Event | null) => void;
+    currentEvent: Event | null;
+    setCurrentEvent: (event: Event | null) => void;
 
-  // 侧边栏状态
-  sidebarOpen: boolean;
-  setSidebarOpen: (open: boolean) => void;
+    sidebarOpen: boolean;
+    setSidebarOpen: (open: boolean) => void;
 
-  // 加载状态
-  loading: boolean;
-  setLoading: (loading: boolean) => void;
+    loading: boolean;
+    setLoading: (loading: boolean) => void;
 
-  // 错误状态
-  error: string | null;
-  setError: (error: string | null) => void;
+    error: string | null;
+    setError: (error: string | null) => void;
 }
 
-// 仪表板状态
+// 儀表板狀態
 interface DashboardStore {
-  stats: DashboardStats | null;
-  liveData: LiveData | null;
-  alerts: Alert[];
+    stats: Dashboard | null;
+    liveData: LiveDashboard | null;
+    alerts: Alerts[];
 
-  setStats: (stats: DashboardStats) => void;
-  setLiveData: (liveData: LiveData) => void;
-  setAlerts: (alerts: Alert[]) => void;
+    setStats: (stats: Dashboard | null) => void;
+    setLiveData: (liveData: LiveDashboard | null) => void;
+    setAlerts: (alerts: Alerts[]) => void;
 
-  // 实时数据更新标志
-  lastUpdated: Date | null;
-  setLastUpdated: (date: Date) => void;
+    // 實時數據更新標志
+    lastUpdated: Date | null;
+    setLastUpdated: (date: Date | null) => void;
 }
 
-// 展览状态
+// 展覽狀態
 interface EventStore {
-  events: Event[];
-  setEvents: (events: Event[]) => void;
-  addEvent: (event: Event) => void;
-  updateEvent: (id: string, updates: Partial<Event>) => void;
-  deleteEvent: (id: string) => void;
+    events: Event[];
+    setEvents: (events: Event[]) => void;
+    addEvent: (event: Event) => void;
+    updateEvent: (id: string, updates: Partial<Event>) => void;
+    deleteEvent: (id: string) => void;
 }
 
-// 创建状态管理
 export const useAppStore = create<AppStore>((set) => ({
-  currentEvent: null,
-  setCurrentEvent: (event) => set({ currentEvent: event }),
+    currentEvent: null,
+    setCurrentEvent: (event) => set({ currentEvent: event }),
 
-  sidebarOpen: true,
-  setSidebarOpen: (open) => set({ sidebarOpen: open }),
+    sidebarOpen: true,
+    setSidebarOpen: (open) => set({ sidebarOpen: open }),
 
-  loading: false,
-  setLoading: (loading) => set({ loading }),
+    loading: false,
+    setLoading: (loading) => set({ loading }),
 
-  error: null,
-  setError: (error) => set({ error }),
+    error: null,
+    setError: (error) => set({ error }),
 }));
 
 export const useDashboardStore = create<DashboardStore>((set) => ({
-  stats: null,
-  liveData: null,
-  alerts: [],
-  lastUpdated: null,
+    stats: null,
+    liveData: null,
+    alerts: [],
+    lastUpdated: null,
 
-  setStats: (stats) => set({ stats }),
-  setLiveData: (liveData) => set({ liveData }),
-  setAlerts: (alerts) => set({ alerts }),
-  setLastUpdated: (date) => set({ lastUpdated: date }),
+    setStats: (stats) => set({ stats }),
+    setLiveData: (liveData) => set({ liveData }),
+    setAlerts: (alerts) => set({ alerts }),
+    setLastUpdated: (date) => set({ lastUpdated: date }),
 }));
 
 export const useEventStore = create<EventStore>((set) => ({
-  events: [],
-  setEvents: (events) => set({ events }),
-  addEvent: (event) => set((state) => ({
-    events: [...state.events, event]
-  })),
-  updateEvent: (id, updates) => set((state) => ({
-    events: state.events.map(event =>
-      event.id === id ? { ...event, ...updates } : event
-    )
-  })),
-  deleteEvent: (id) => set((state) => ({
-    events: state.events.filter(event => event.id !== id)
-  })),
+    events: [],
+    setEvents: (events) => set({ events }),
+    addEvent: (event) => set((state) => ({
+        events: [...state.events, event]
+    })),
+    updateEvent: (id, updates) => set((state) => ({
+        events: state.events.map(event =>
+            event.id === id ? { ...event, ...updates } : event
+        )
+    })),
+    deleteEvent: (id) => set((state) => ({
+        events: state.events.filter(event => event.id !== id)
+    })),
 }));
+
+export { useBoothStore } from './boothStore';

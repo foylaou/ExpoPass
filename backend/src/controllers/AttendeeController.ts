@@ -11,7 +11,7 @@ import {
     NotFoundError,
     BadRequestError,
 } from 'routing-controllers';
-import { Service } from 'typedi';
+import { Service, Container } from 'typedi';
 import { AttendeeService } from '../services';
 import { CreateAttendeeDto, UpdateAttendeeDto, BatchCreateAttendeeDto } from '../dto/AttendeeDto';
 import { Attendee } from '../entities';
@@ -26,6 +26,11 @@ import { Attendee } from '../entities';
 @JsonController('/api/attendees')
 export class AttendeeController {
     constructor(private attendeeService: AttendeeService) {}
+    
+    // 輔助方法：獲取正確的服務實例
+    private getService(): AttendeeService {
+        return Container.get(AttendeeService);
+    }
 
     /**
      * @swagger
@@ -52,7 +57,7 @@ export class AttendeeController {
      */
     @Get('/')
     async getAllAttendees(@QueryParam('eventId') eventId?: string): Promise<Attendee[]> {
-        return await this.attendeeService.findAll(eventId);
+        return await this.getService().findAll(eventId);
     }
 
     /**
@@ -95,7 +100,7 @@ export class AttendeeController {
         if (!eventId || !keyword) {
             throw new BadRequestError('eventId 和 keyword 為必填參數');
         }
-        return await this.attendeeService.search(eventId, keyword);
+        return await this.getService().search(eventId, keyword);
     }
 
     /**
@@ -123,7 +128,7 @@ export class AttendeeController {
      */
     @Get('/token/:token')
     async getAttendeeByToken(@Param('token') token: string): Promise<Attendee> {
-        const attendee = await this.attendeeService.findByToken(token);
+        const attendee = await this.getService().findByToken(token);
         if (!attendee) {
             throw new NotFoundError('無效的 QR Code Token');
         }
@@ -156,7 +161,7 @@ export class AttendeeController {
      */
     @Get('/:id')
     async getAttendeeById(@Param('id') id: string): Promise<Attendee> {
-        const attendee = await this.attendeeService.findById(id);
+        const attendee = await this.getService().findById(id);
         if (!attendee) {
             throw new NotFoundError('參展人員不存在');
         }
@@ -226,7 +231,7 @@ export class AttendeeController {
     @HttpCode(201)
     async createAttendee(@Body() createAttendeeDto: CreateAttendeeDto): Promise<Attendee> {
         try {
-            return await this.attendeeService.create(createAttendeeDto);
+            return await this.getService().create(createAttendeeDto);
         } catch (error: any) {
             if (error.message.includes('Email already exists')) {
                 throw new BadRequestError('該展覽中此 Email 已存在');
@@ -295,7 +300,7 @@ export class AttendeeController {
     @Post('/batch')
     @HttpCode(201)
     async createAttendeeBatch(@Body() batchDto: BatchCreateAttendeeDto): Promise<{ data: Attendee[]; count: number }> {
-        const attendees = await this.attendeeService.createBatch(batchDto);
+        const attendees = await this.getService().createBatch(batchDto);
         return {
             data: attendees,
             count: attendees.length,
@@ -360,7 +365,7 @@ export class AttendeeController {
     @Put('/:id')
     async updateAttendee(@Param('id') id: string, @Body() updateAttendeeDto: UpdateAttendeeDto): Promise<Attendee> {
         try {
-            const attendee = await this.attendeeService.update(id, updateAttendeeDto);
+            const attendee = await this.getService().update(id, updateAttendeeDto);
             if (!attendee) {
                 throw new NotFoundError('參展人員不存在');
             }
@@ -394,12 +399,12 @@ export class AttendeeController {
      *         description: 找不到參展人員
      */
     @Delete('/:id')
-    @HttpCode(204)
-    async deleteAttendee(@Param('id') id: string): Promise<void> {
-        const deleted = await this.attendeeService.delete(id);
+    async deleteAttendee(@Param('id') id: string): Promise<{ message: string }> {
+        const deleted = await this.getService().delete(id);
         if (!deleted) {
             throw new NotFoundError('參展人員不存在');
         }
+        return { message: '刪除成功' };
     }
 
     /**
@@ -444,7 +449,7 @@ export class AttendeeController {
      */
     @Get('/:id/stats')
     async getAttendeeStats(@Param('id') id: string) {
-        const stats = await this.attendeeService.getScanStats(id);
+        const stats = await this.getService().getScanStats(id);
         if (!stats) {
             throw new NotFoundError('參展人員不存在');
         }
@@ -473,11 +478,28 @@ export class AttendeeController {
      *             schema:
      *               type: array
      *               items:
-     *                 $ref: '#/components/schemas/ScanRecord'
+     *                 type: object
+     *                 properties:
+     *                   booth_id:
+     *                     type: string
+     *                   booth_name:
+     *                     type: string
+     *                   booth_number:
+     *                     type: string
+     *                   booth_company:
+     *                     type: string
+     *                   scanned_at:
+     *                     type: string
+     *                     format: date-time
+     *                   scan_count:
+     *                     type: integer
+     *       404:
+     *         description: 找不到參展人員
      */
     @Get('/:id/history')
     async getAttendeeHistory(@Param('id') id: string) {
-        return await this.attendeeService.getScanHistory(id);
+        const history = await this.getService().getScanHistory(id);
+        return history;
     }
 
     /**
@@ -515,7 +537,7 @@ export class AttendeeController {
         @Param('eventId') eventId: string,
         @Param('company') company: string
     ): Promise<Attendee[]> {
-        return await this.attendeeService.findByCompany(eventId, company);
+        return await this.getService().findByCompany(eventId, company);
     }
 
     /**
@@ -562,6 +584,6 @@ export class AttendeeController {
      */
     @Get('/event/:eventId/stats')
     async getEventAttendeeStats(@Param('eventId') eventId: string) {
-        return await this.attendeeService.getEventStats(eventId);
+        return await this.getService().getEventStats(eventId);
     }
 }

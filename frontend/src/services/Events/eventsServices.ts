@@ -1,5 +1,5 @@
 import axios from "axios";
-import type {ApiResponse} from "../../types";
+import type {ApiResponse} from "../apiTypes";
 import type {
     CreateEventRequest,
     Event,
@@ -8,8 +8,9 @@ import type {
 } from "./eventsType.ts";
 
 const service_name: string = "events"
-const API_URL: string = import.meta.env.API_URL || "http://localhost:3000/api/" || "http://localhost:5173/api/";
+const API_URL: string = import.meta.env.VITE_API_URL || "/api";
 const API: string = `${API_URL}/${service_name}`;
+console.log(`[eventsServices] API URL: ${API}`);
 const api = axios.create({
     baseURL: `${API}`,  // API請求的基礎路徑
     timeout: 10000, // 超時設置
@@ -32,12 +33,21 @@ export const eventsServices = {
             const response = await api.get(``, {
                 headers: { "Content-Type": "application/json" }
             });
+            // 後端直接返回陣列，需要包裝成 ApiResponse 格式
+            if (Array.isArray(response.data)) {
+                return {
+                    success: true,
+                    data: response.data
+                };
+            }
+            // 如果已經是 ApiResponse 格式
             return response.data;
-        } catch (error) {
-            console.error(`GetAllEvent Error: ${error}`);
+        } catch (error: any) {
+            console.error(`GetAllEvent Error:`, error);
+            console.error(`Error details:`, error.response?.data || error.message);
             return {
                 success: false,
-                message: "取得全部活動展覽失敗，請稍後再試。"
+                message: error.response?.data?.message || error.message || "取得全部活動展覽失敗，請稍後再試。"
             };
         }
     },
@@ -53,12 +63,20 @@ export const eventsServices = {
             const response = await api.post(``, data, {
                 headers: { "Content-Type": "application/json" }
             });
+            // 如果後端直接返回 Event 對象，包裝成 ApiResponse
+            if (response.data && response.data.id && !response.data.success) {
+                return {
+                    success: true,
+                    data: response.data
+                };
+            }
             return response.data;
-        } catch (error) {
-            console.error(`CreateEvent Error: ${error}`);
+        } catch (error: any) {
+            console.error(`CreateEvent Error:`, error);
+            console.error(`Error details:`, error.response?.data || error.message);
             return {
                 success: false,
-                message: "建立新的活動失敗，請稍後再試。"
+                message: error.response?.data?.message || error.message || "建立新的活動失敗，請稍後再試。"
             };
         }
     },
@@ -74,12 +92,19 @@ export const eventsServices = {
             const response = await api.get(`/${id}`, {
                 headers: { "Content-Type": "application/json" }
             });
+            // 如果後端直接返回對象，包裝成 ApiResponse
+            if (response.data && !response.data.success) {
+                return {
+                    success: true,
+                    data: response.data
+                };
+            }
             return response.data;
-        } catch (error) {
-            console.error(`GetEventById Error: ${error}`);
+        } catch (error: any) {
+            console.error(`GetEventById Error:`, error);
             return {
                 success: false,
-                message: "根據 ID 取得活動資訊失敗，請稍後再試。"
+                message: error.response?.data?.message || error.message || "根據 ID 取得活動資訊失敗，請稍後再試。"
             };
         }
     },
@@ -91,12 +116,15 @@ export const eventsServices = {
      * @param {Omit<Event, "id">} data - 要更新的活動資料（不包含 id）
      * @returns {Promise<ApiResponse<Event>>} 回傳更新後的活動資料
      */
-    async UpdateEvent(id: string, data: Omit<Event, "id">): Promise<ApiResponse<Event>> {
+    async UpdateEvent(id: string, data: Omit<Event, "id"|"createdAt"|"updatedAt">): Promise<ApiResponse<Event>> {
         try {
             const response = await api.put(`/${id}`, data, {
                 headers: { 'Content-Type': 'application/json' },
             });
-            return response.data;
+            return {
+                success: true,
+                data: response.data
+            };
         } catch (error) {
             console.error(`UpdateEvent Error:`, error);
             return {
@@ -117,6 +145,7 @@ export const eventsServices = {
             const response = await api.delete(`/${id}`, {
                 headers: { "Content-Type": "application/json" }
             });
+
             return response.data;
         } catch (error) {
             console.error(`DeleteEvent Error: ${error}`);
