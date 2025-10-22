@@ -214,12 +214,18 @@ export interface AttendeeScanState {
  * @interface AttendeeScanHistory
  * @description 定義了單一參與者的掃描歷史記錄項目。
  *
- * @property {string} id - 掃描記錄的唯一識別碼
- * @property {string} scannedAt - 掃描發生的時間戳記
- * @property {string} notes - 掃描時可能記錄的備註或額外資訊
+ * @property {string} booth_id - 攤位唯一識別碼
+ * @property {string} booth_name - 攤位名稱
+ * @property {string} [booth_number] - 攤位編號（可選）
+ * @property {string} [booth_company] - 攤位所屬公司（可選）
+ * @property {string} scanned_at - 掃描發生的時間戳記
+ * @property {number} [scan_count] - 掃描次數（可選）
  */
 export interface AttendeeScanHistory {
-    id: string;
-    scannedAt: string;
-    notes: string;
+    booth_id: string;
+    booth_name: string;
+    booth_number?: string;
+    booth_company?: string;
+    scanned_at: string;
+    scan_count?: number;
 }

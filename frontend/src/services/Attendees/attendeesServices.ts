@@ -199,10 +199,15 @@ export const attendeesServices = {
     async GetAttendeesScanHistory(id: string): Promise<ApiResponse<AttendeeScanHistory[]>> {
         try {
             const response = await api.get(`/${id}/history`);
-            return response.data;
+            // 後端直接返回掃描歷史陣列，需要包裝成統一格式
+            const history = Array.isArray(response.data) ? response.data : [];
+            return {
+                success: true,
+                data: history
+            };
         } catch (error) {
             console.log("GetAttendeesScanHistory:" + error);
-            return {success: false, message: "查詢基本資料失敗，伺服器回應異常"};
+            return {success: false, message: "查詢掃描歷史失敗，伺服器回應異常"};
         }
     }
 

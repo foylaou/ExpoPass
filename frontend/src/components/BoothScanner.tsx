@@ -12,7 +12,7 @@ interface BoothScannerProps {
 
 export const BoothScanner: React.FC<BoothScannerProps> = ({ onClose, onScanSuccess }) => {
   const { user } = useAuth();
-  const [scanning, setScanning] = useState(false);
+
   const [manualToken, setManualToken] = useState('');
   const [scannerMode, setScannerMode] = useState<'camera' | 'manual'>('camera');
   const [result, setResult] = useState<{ success: boolean; message: string; data?: any } | null>(null);
@@ -42,7 +42,7 @@ export const BoothScanner: React.FC<BoothScannerProps> = ({ onClose, onScanSucce
       });
 
       if (response.success && response.data) {
-        const successMsg = `成功記錄！訪客：${response.data.attendee_name || '未知'}`;
+        const successMsg = `成功記錄！訪客：${response.data.attendee || '未知'}`;
         setResult({
           success: true,
           message: successMsg,
@@ -50,7 +50,7 @@ export const BoothScanner: React.FC<BoothScannerProps> = ({ onClose, onScanSucce
         });
         toast.success(successMsg);
         setManualToken('');
-        
+
         if (onScanSuccess) {
           onScanSuccess(response.data);
         }
@@ -198,7 +198,7 @@ export const BoothScanner: React.FC<BoothScannerProps> = ({ onClose, onScanSucce
                     },
                   }}
                 />
-                
+
                 {loading && (
                   <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-10">
                     <div className="text-center">

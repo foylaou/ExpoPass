@@ -1,7 +1,7 @@
 /**
  * QR Code 格式類型
  */
-export type QRCodeFormat = 'image' | 'json';
+export type QRCodeFormat = 'png' |'image' | 'json';
 
 /**
  * QR Code 類型

@@ -3,8 +3,7 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import tailwindcss from '@tailwindcss/vite'
 import Sitemap from 'vite-plugin-sitemap'
-import { createHtmlPlugin } from 'vite-plugin-html';
-import metaMapPlugin from "vite-plugin-react-meta-map";
+import { createHtmlPlugin } from 'vite-plugin-html'
 
 
 
@@ -27,14 +26,18 @@ export default defineConfig({
         }
     },
 
+    optimizeDeps: {
+        include: ['react', 'react-dom', 'react-helmet-async'],
+    },
+
+    ssr: {
+        noExternal: ['react-helmet-async'],
+    },
+
     plugins: [
         react(),
         tailwindcss(),
         Sitemap({ hostname: 'https://expopass.isafe.org.tw' }),
-        metaMapPlugin({
-            pageMetaMapFilePath: "./src/pageMetaMap.ts",
-            pageTemplateFilePath: "./src/App.tsx",
-        }),
         createHtmlPlugin({
             minify: true,
             inject: {

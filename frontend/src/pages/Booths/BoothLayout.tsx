@@ -8,13 +8,13 @@ import {
     Grid3x3,
     ZoomIn,
     ZoomOut,
-    Maximize2,
     Filter,
     Search
 } from 'lucide-react';
 import { useAppStore } from '../../store';
-import { boothsServices } from '../../services/booths/boothsServices.ts';
-import type { Booths } from '../../services/booths/boothsType.ts';
+import type {Booths} from "../../services/Booths/boothsType.ts";
+import {boothsServices} from "../../services/Booths/boothsServices.ts";
+
 
 export const BoothLayout = () => {
     const navigate = useNavigate();
@@ -25,7 +25,7 @@ export const BoothLayout = () => {
     const [zoomLevel, setZoomLevel] = useState(1);
 
     useEffect(() => {
-        loadBooths();
+        void loadBooths();
     }, []);
 
     const loadBooths = async () => {
@@ -44,22 +44,22 @@ export const BoothLayout = () => {
 
     // 按位置分組攤位
     const locations = Array.from(new Set(booths.map(b => b.location).filter(Boolean)));
-    
+
     const groupedBooths = locations.reduce((acc, location) => {
         acc[location] = booths.filter(b => b.location === location);
         return acc;
     }, {} as Record<string, Booths[]>);
 
     // 篩選攤位
-    const filteredLocations = selectedLocation === 'all' 
-        ? locations 
+    const filteredLocations = selectedLocation === 'all'
+        ? locations
         : locations.filter(loc => loc === selectedLocation);
 
     const filteredBooths = booths.filter(booth => {
         const matchesLocation = selectedLocation === 'all' || booth.location === selectedLocation;
-        const matchesSearch = !searchQuery || 
-            booth.booth_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            booth.booth_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        const matchesSearch = !searchQuery ||
+            booth.boothName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            booth.boothNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             booth.company?.toLowerCase().includes(searchQuery.toLowerCase());
         return matchesLocation && matchesSearch;
     });
@@ -196,10 +196,10 @@ export const BoothLayout = () => {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 overflow-auto">
                 <div style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top left' }}>
                     {filteredLocations.map((location) => {
-                        const locationBooths = groupedBooths[location]?.filter(booth => 
-                            !searchQuery || 
-                            booth.booth_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            booth.booth_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        const locationBooths = groupedBooths[location]?.filter(booth =>
+                            !searchQuery ||
+                            booth.boothName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            booth.boothNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
                             booth.company?.toLowerCase().includes(searchQuery.toLowerCase())
                         ) || [];
 
@@ -229,18 +229,18 @@ export const BoothLayout = () => {
                                                 ${getBoothTextColor(booth)}
                                                 group
                                             `}
-                                            title={`${booth.booth_name}${booth.company ? ` - ${booth.company}` : ''}`}
+                                            title={`${booth.boothName}${booth.company ? ` - ${booth.company}` : ''}`}
                                         >
                                             <Building2 className="w-5 h-5 mb-1 opacity-70" />
                                             <span className="text-xs font-bold text-center leading-tight">
-                                                {booth.booth_number}
+                                                {booth.boothNumber}
                                             </span>
-                                            
+
                                             {/* Hover 資訊 */}
                                             <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block z-10">
                                                 <div className="bg-gray-900 text-white text-xs rounded-lg py-2 px-3 whitespace-nowrap shadow-lg">
-                                                    <p className="font-semibold">{booth.booth_number}</p>
-                                                    <p className="text-gray-300">{booth.booth_name}</p>
+                                                    <p className="font-semibold">{booth.boothNumber}</p>
+                                                    <p className="text-gray-300">{booth.boothName}</p>
                                                     {booth.company && (
                                                         <p className="text-gray-400 flex items-center mt-1">
                                                             <Users className="w-3 h-3 mr-1" />

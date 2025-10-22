@@ -12,8 +12,7 @@ import { Scan } from './pages/Scan';
 
 import { BoothsPage } from './pages/Booths/Booths.tsx';
 import { BoothForm } from './pages/Booths/BoothForm.tsx';
-import { BoothDetail } from './pages/booths/BoothDetail.tsx';
-import { BoothLayout } from './pages/booths/BoothLayout.tsx';
+
 import { Toaster } from "react-hot-toast";
 import type {PageMetaData} from './pageMetaMap';
 
@@ -21,6 +20,7 @@ import React from "react";
 import {Events} from "./pages/Events/Events.tsx";
 import {EventForm} from "./pages/Events/EventForm.tsx";
 import {Reports} from "./pages/Reports.tsx";
+import {BoothDetail, BoothLayout} from "./pages/Booths";
 
 interface AppProps {
   pageMetaData?: PageMetaData;

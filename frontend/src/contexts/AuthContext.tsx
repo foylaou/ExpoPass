@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, {createContext, useContext, useState, useEffect, type ReactNode} from 'react';
 import { authServices } from '../services/Auth/authServices';
 
 export type UserRole = 'admin' | 'attendee' | 'booth' | null;

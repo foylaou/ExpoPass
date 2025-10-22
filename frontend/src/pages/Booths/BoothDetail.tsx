@@ -6,25 +6,25 @@ import {
     MapPin,
     Users,
     Calendar,
-    TrendingUp,
+
     Clock,
     UserCheck,
     Eye,
     QrCode,
     Edit,
-    BarChart3,
+
     Activity
 } from 'lucide-react';
 import { useAppStore } from '../../store';
-import { boothsServices } from '../../services/booths/boothsServices.ts';
+
+
+import {boothsServices} from "../../services/Booths/boothsServices.ts";
 import type {
     Booths,
+    GetBoothDailyStatsResponse, GetBoothHourlyStatsResponse, GetBoothRepeatVisitorResponse,
     GetBoothStatsResponse,
-    GetBoothVisitorsResponse,
-    GetBoothDailyStatsResponse,
-    GetBoothHourlyStatsResponse,
-    GetBoothRepeatVisitorResponse
-} from '../../services/booths/boothsType.ts';
+    GetBoothVisitorsResponse
+} from "../../services/Booths/boothsType.ts";
 
 export const BoothDetail = () => {
     const { id } = useParams<{ id: string }>();
@@ -132,8 +132,8 @@ export const BoothDetail = () => {
                         <ArrowLeft className="w-5 h-5 text-gray-600" />
                     </button>
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900">{booth.booth_name}</h1>
-                        <p className="text-gray-600">攤位編號: {booth.booth_number}</p>
+                        <h1 className="text-2xl font-bold text-gray-900">{booth.boothName}</h1>
+                        <p className="text-gray-600">攤位編號: {booth.boothNumber}</p>
                     </div>
                 </div>
 

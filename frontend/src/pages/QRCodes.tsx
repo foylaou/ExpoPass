@@ -55,7 +55,7 @@ export const QRCodes = () => {
 
     try {
       setLoading(true);
-      
+
       // 並行獲取參展者和攤位資料
       const [attendeesRes, boothsRes] = await Promise.all([
         attendeesServices.GetAllAttendees({ eventId: currentEvent.id }),
@@ -87,9 +87,9 @@ export const QRCodes = () => {
           qrCodeItems.push({
             id: booth.id,
             type: 'booth',
-            name: booth.booth_name,
+            name: booth.boothName,
             company: booth.company,
-            identifier: booth.booth_number,
+            identifier: booth.boothNumber,
             qrCodeUrl: `/qrcodes/booth/${booth.id}`,
             generatedAt: new Date().toISOString()
           });
@@ -142,7 +142,7 @@ export const QRCodes = () => {
     try {
       setLoading(true);
       let result: Blob | any;
-      
+
       if (type === 'attendee') {
         result = await qrcodeServices.generateAttendeeQRCode({
           id,
@@ -209,7 +209,7 @@ export const QRCodes = () => {
       }
 
       const results = await Promise.all(promises);
-      
+
       // 下載所有生成的ZIP文件
       results.forEach((blob, index) => {
         const url = URL.createObjectURL(blob);
@@ -590,8 +590,8 @@ export const QRCodes = () => {
 
                 {/* QR碼預覽 */}
                 <div className="bg-white rounded-lg p-4 mb-4 text-center">
-                  <img 
-                    src={item.qrCodeUrl} 
+                  <img
+                    src={item.qrCodeUrl}
                     alt="QR Code"
                     className="w-32 h-32 mx-auto mb-2 object-contain"
                     onError={(e) => {

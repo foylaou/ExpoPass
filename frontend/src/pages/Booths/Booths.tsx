@@ -156,8 +156,8 @@ export const BoothsPage = () => {
     // 篩選攤位
     const filteredBooths = booths.filter(booth => {
         const matchesSearch =
-            booth.booth_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            booth.booth_number?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            booth.boothName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            booth.boothNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             booth.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             booth.description?.toLowerCase().includes(searchQuery.toLowerCase());
 
@@ -389,7 +389,7 @@ export const BoothsPage = () => {
                                             <Building2 className="w-6 h-6 text-blue-600" />
                                         </div>
                                         <div className="ml-3">
-                                            <h3 className="font-semibold text-gray-900">{booth.booth_number}</h3>
+                                            <h3 className="font-semibold text-gray-900">{booth.boothNumber}</h3>
                                             <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                                                 booth.location === 'A區' ? 'bg-blue-100 text-blue-800' :
                                                     booth.location === 'B區' ? 'bg-green-100 text-green-800' :
@@ -432,7 +432,7 @@ export const BoothsPage = () => {
                                 </div>
 
                                 <div className="space-y-3">
-                                    <h4 className="font-medium text-gray-900">{booth.booth_name}</h4>
+                                    <h4 className="font-medium text-gray-900">{booth.boothName}</h4>
                                     {booth.company && (
                                         <p className="text-sm text-gray-600 flex items-center">
                                             <Users className="w-4 h-4 mr-2" />
@@ -444,7 +444,7 @@ export const BoothsPage = () => {
                                     )}
 
                                     <div className="pt-3 border-t border-gray-200 flex items-center justify-between">
-                                        <span className="text-xs text-gray-500">攤位編號: {booth.booth_number}</span>
+                                        <span className="text-xs text-gray-500">攤位編號: {booth.boothNumber}</span>
                                         <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                                             booth.company ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
                                         }`}>
@@ -488,10 +488,10 @@ export const BoothsPage = () => {
                                             </div>
                                             <div className="ml-4">
                                                 <div className="text-sm font-medium text-gray-900">
-                                                    {booth.booth_number}
+                                                    {booth.boothNumber}
                                                 </div>
                                                 <div className="text-sm text-gray-500">
-                                                    {booth.booth_name}
+                                                    {booth.boothName}
                                                 </div>
                                             </div>
                                         </div>
