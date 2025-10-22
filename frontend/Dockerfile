@@ -15,6 +15,7 @@ WORKDIR /app
 # Copy package manager configuration
 COPY pnpm-lock.yaml ./
 COPY package.json ./
+COPY pnpm-workspace.yaml ./
 
 # Copy frontend package.json
 COPY frontend/package.json ./frontend/

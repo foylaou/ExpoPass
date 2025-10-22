@@ -15,9 +15,11 @@ WORKDIR /app
 # Copy package manager configuration
 COPY pnpm-lock.yaml ./
 COPY package.json ./
+COPY pnpm-workspace.yaml ./
 
-# Copy backend package.json
+# Copy backend package.json and tsconfig
 COPY backend/package.json ./backend/
+COPY backend/tsconfig.json ./backend/
 
 # Install dependencies using pnpm
 RUN pnpm install --frozen-lockfile
@@ -27,7 +29,7 @@ COPY backend ./backend
 
 # Build TypeScript to JavaScript
 WORKDIR /app/backend
-RUN pnpm build
+RUN pnpm run build
 
 # ============================================
 # Stage 2: Production Stage
@@ -43,6 +45,7 @@ WORKDIR /app
 # Copy package manager configuration
 COPY pnpm-lock.yaml ./
 COPY package.json ./
+COPY pnpm-workspace.yaml ./
 COPY backend/package.json ./backend/
 
 # Install production dependencies only
