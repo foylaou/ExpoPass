@@ -17,8 +17,10 @@ COPY pnpm-lock.yaml ./
 COPY package.json ./
 COPY pnpm-workspace.yaml ./
 
-# Copy frontend package.json
+# Copy frontend package.json and config files
 COPY frontend/package.json ./frontend/
+COPY frontend/tsconfig*.json ./frontend/
+COPY frontend/vite.config.ts ./frontend/
 
 # Install dependencies using pnpm
 RUN pnpm install --frozen-lockfile
