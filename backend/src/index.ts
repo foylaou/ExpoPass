@@ -68,6 +68,37 @@ useExpressServer(app, {
   routePrefix: '',
 });
 
+// QR Code 圖片下載路由
+app.get('/qrcodes/attendee/:id', async (req: Request, res: Response) => {
+    try {
+        const qrcodeService = Container.get(QRCodeController);
+        const id = req.params.id;
+        const size = req.query.size ? parseInt(req.query.size as string) : 300;
+        
+        await qrcodeService.getAttendeeQRCode(id, size, 'image', res);
+    } catch (error: any) {
+        res.status(error.httpCode || 500).json({
+            error: error.name || 'Error',
+            message: error.message || '生成 QR Code 失敗'
+        });
+    }
+});
+
+app.get('/qrcodes/booth/:id', async (req: Request, res: Response) => {
+    try {
+        const qrcodeService = Container.get(QRCodeController);
+        const id = req.params.id;
+        const size = req.query.size ? parseInt(req.query.size as string) : 300;
+        
+        await qrcodeService.getBoothQRCode(id, size, 'image', res);
+    } catch (error: any) {
+        res.status(error.httpCode || 500).json({
+            error: error.name || 'Error',
+            message: error.message || '生成 QR Code 失敗'
+        });
+    }
+});
+
 // 健康檢查路由
 app.get('/api/health', (req: Request, res: Response) => {
     res.json({

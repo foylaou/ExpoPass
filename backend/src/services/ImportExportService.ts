@@ -136,15 +136,15 @@ export class ImportExportService {
                 const row = data[i];
 
                 const boothData = {
-                    event_id: eventId,
-                    booth_number: row.booth_number || row['攤位編號'] || row['Booth Number'],
-                    booth_name: row.booth_name || row['攤位名稱'] || row['Booth Name'],
+                    eventId: eventId,
+                    boothNumber: row.boothNumber || row.booth_number || row['攤位編號'] || row['Booth Number'],
+                    boothName: row.boothName || row.booth_name || row['攤位名稱'] || row['Booth Name'],
                     company: row.company || row['公司'] || row.Company,
                     description: row.description || row['描述'] || row.Description,
                     location: row.location || row['位置'] || row.Location,
                 };
 
-                if (!boothData.booth_number || !boothData.booth_name) {
+                if (!boothData.boothNumber || !boothData.boothName) {
                     throw new Error('Booth number and name are required');
                 }
 

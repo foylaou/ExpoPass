@@ -8,7 +8,6 @@ import axios from "axios";
 import type {ApiResponse} from "../apiTypes";
 
 
-
 const service_name:string = "attendees"
 const API_URL:string = import.meta.env.VITE_API_URL || "/api";
 const API: string = `${API_URL}/${service_name}`;
@@ -98,7 +97,7 @@ export const attendeesServices = {
     async GetAttendeeById(id: string): Promise<ApiResponse<Attendee>> {
         try {
             const response = await api.get(`/${id}`);
-            return response.data;
+            return {success: true,message:"ok",data: response.data}
         } catch (error) {
             console.log("GetAttendeeById:" + error);
             return {success: false, message: "查詢基本資料失敗，伺服器回應異常"};
@@ -111,8 +110,17 @@ export const attendeesServices = {
      * @constructor
      */
     async UpdateAttendee(id: string, data: Attendee): Promise<ApiResponse<Attendee>> {
+        const update ={
+            name: data.name,
+            email: data.email,
+            phone: data.phone,
+            title: data.title,
+            company: data.company,
+            avatarUrl: data.avatarUrl,
+            badgeNumber: data.badgeNumber,
+        }
         try {
-            const response = await api.put(`/${id}`, data,
+            const response = await api.put(`/${id}`, update,
                 {
                     headers: {
                         "Content-Type": "application/json",
@@ -120,7 +128,7 @@ export const attendeesServices = {
                     }
                 }
             );
-            return response.data;
+            return {success:true,message:"ok",data: response.data};
         } catch (error) {
             console.log("UpdateAttendee:" + error);
             return {success: false, message: "更新基本資料失敗，伺服器回應異常"};
@@ -135,7 +143,12 @@ export const attendeesServices = {
     async DeleteAttendee(id: string): Promise<ApiResponse<boolean>> {
         try {
             const response = await api.delete(`/${id}`);
-            return response.data;
+            // 後端回傳 { message: '刪除成功' }，需要轉換成標準格式
+            return {
+                success: true,
+                message: response.data?.message || '刪除成功',
+                data: true
+            };
         } catch (error) {
             console.log("DeleteAttendee:" + error);
             return {success: false, message: "刪除基本資料失敗，伺服器回應異常"};

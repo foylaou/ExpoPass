@@ -3,17 +3,19 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Save, ArrowLeft, Building2, MapPin, Hash, Users, Calendar } from 'lucide-react';
 import { useAppStore, useEventStore } from '../../store';
-import { boothsServices } from '../../services/booths/boothsServices.ts';
-import type { CreateBoothsRequest, UpdateBoothsRequest } from "../../services/booths/boothsType.ts";
+import {boothsServices} from "../../services/Booths/boothsServices.ts";
+import type {CreateBoothsRequest, UpdateBoothsRequest} from "../../services/Booths/boothsType.ts";
+
+
 
 // 表單資料介面
 interface BoothFormData {
-    booth_number: string;
-    booth_name: string;
-    location: string;
-    event_id: string;
-    company: string;
-    description: string;
+    boothNumber?: string;
+    boothName?: string;
+    location?: string;
+    eventId?: string;
+    company?: string;
+    description?: string;
 }
 
 export const BoothForm = () => {
@@ -24,10 +26,10 @@ export const BoothForm = () => {
     const isEdit = Boolean(id);
 
     const [formData, setFormData] = useState<BoothFormData>({
-        booth_number: '',
-        booth_name: '',
+        boothNumber: '',
+        boothName: '',
         location: '',
-        event_id: currentEvent?.id || '',
+        eventId: currentEvent?.id || '',
         company: '',
         description: ''
     });
@@ -53,10 +55,10 @@ export const BoothForm = () => {
             if (response.success && response.data) {
                 const booth = response.data;
                 setFormData({
-                    booth_number: booth.booth_number,
-                    booth_name: booth.booth_name,
+                    boothNumber: booth.boothNumber || '',
+                    boothName: booth.boothName || '',
                     location: booth.location || '',
-                    event_id: currentEvent?.id || '',
+                    eventId: currentEvent?.id || '',
                     company: booth.company || '',
                     description: booth.description || ''
                 });
@@ -77,7 +79,7 @@ export const BoothForm = () => {
         const area = areas[Math.floor(Math.random() * areas.length)];
         const number = Math.floor(1 + Math.random() * 99).toString().padStart(2, '0');
         const boothNumber = `${area}${number}`;
-        setFormData(prev => ({ ...prev, booth_number: boothNumber }));
+        setFormData(prev => ({ ...prev, boothNumber: boothNumber }));
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -93,20 +95,20 @@ export const BoothForm = () => {
     const validateForm = () => {
         const newErrors: Record<string, string> = {};
 
-        if (!formData.booth_number.trim()) {
-            newErrors.booth_number = '請輸入攤位號';
+        if (!formData.boothNumber?.trim()) {
+            newErrors.boothNumber = '請輸入攤位號';
         }
 
-        if (!formData.booth_name.trim()) {
-            newErrors.booth_name = '請輸入攤位名稱';
+        if (!formData.boothName?.trim()) {
+            newErrors.boothName = '請輸入攤位名稱';
         }
 
-        if (!formData.location.trim()) {
+        if (!formData.location?.trim()) {
             newErrors.location = '請選擇位置';
         }
 
-        if (!formData.event_id) {
-            newErrors.event_id = '請選擇關聯活動';
+        if (!formData.eventId) {
+            newErrors.eventId = '請選擇關聯活動';
         }
 
         setErrors(newErrors);
@@ -126,11 +128,11 @@ export const BoothForm = () => {
             if (isEdit && id) {
                 // 更新攤位
                 const updateData: UpdateBoothsRequest = {
-                    booth_number: formData.booth_number,
-                    booth_name: formData.booth_name,
-                    location: formData.location,
-                    company: formData.company,
-                    description: formData.description
+                    boothNumber: formData.boothNumber || '',
+                    boothName: formData.boothName || '',
+                    location: formData.location || '',
+                    company: formData.company || '',
+                    description: formData.description || ''
                 };
 
                 const response = await boothsServices.UpdateBoothById(id, updateData);
@@ -143,12 +145,12 @@ export const BoothForm = () => {
             } else {
                 // 創建攤位
                 const createData: CreateBoothsRequest = {
-                    event_id: formData.event_id,
-                    booth_number: formData.booth_number,
-                    booth_name: formData.booth_name,
-                    location: formData.location,
-                    company: formData.company,
-                    description: formData.description
+                    eventId: formData.eventId || '',
+                    boothNumber: formData.boothNumber || '',
+                    boothName: formData.boothName || '',
+                    location: formData.location || '',
+                    company: formData.company || '',
+                    description: formData.description || ''
                 };
 
                 const response = await boothsServices.CreateNewBooth(createData);
@@ -214,11 +216,11 @@ export const BoothForm = () => {
                                         <Hash className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                                         <input
                                             type="text"
-                                            name="booth_number"
-                                            value={formData.booth_number}
+                                            name="boothNumber"
+                                            value={formData.boothNumber || ''}
                                             onChange={handleInputChange}
                                             className={`w-full pl-10 pr-3 py-2 border rounded-l-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                                                errors.booth_number ? 'border-red-300' : 'border-gray-300'
+                                                errors.boothNumber ? 'border-red-300' : 'border-gray-300'
                                             }`}
                                             placeholder="A01"
                                         />
@@ -231,8 +233,8 @@ export const BoothForm = () => {
                                         自動生成
                                     </button>
                                 </div>
-                                {errors.booth_number && (
-                                    <p className="mt-1 text-sm text-red-600">{errors.booth_number}</p>
+                                {errors.boothNumber && (
+                                    <p className="mt-1 text-sm text-red-600">{errors.boothNumber}</p>
                                 )}
                             </div>
 
@@ -243,16 +245,16 @@ export const BoothForm = () => {
                                 </label>
                                 <input
                                     type="text"
-                                    name="booth_name"
-                                    value={formData.booth_name}
+                                    name="boothName"
+                                    value={formData.boothName || ''}
                                     onChange={handleInputChange}
                                     className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                                        errors.booth_name ? 'border-red-300' : 'border-gray-300'
+                                        errors.boothName ? 'border-red-300' : 'border-gray-300'
                                     }`}
                                     placeholder="如：科技創新攤位"
                                 />
-                                {errors.booth_name && (
-                                    <p className="mt-1 text-sm text-red-600">{errors.booth_name}</p>
+                                {errors.boothName && (
+                                    <p className="mt-1 text-sm text-red-600">{errors.boothName}</p>
                                 )}
                             </div>
 
@@ -265,7 +267,7 @@ export const BoothForm = () => {
                                     <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                                     <select
                                         name="location"
-                                        value={formData.location}
+                                        value={formData.location || ''}
                                         onChange={handleInputChange}
                                         className={`w-full pl-10 pr-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                                             errors.location ? 'border-red-300' : 'border-gray-300'
@@ -290,11 +292,11 @@ export const BoothForm = () => {
                                 <div className="relative">
                                     <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                                     <select
-                                        name="event_id"
-                                        value={formData.event_id}
+                                        name="eventId"
+                                        value={formData.eventId || ''}
                                         onChange={handleInputChange}
                                         className={`w-full pl-10 pr-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                                            errors.event_id ? 'border-red-300' : 'border-gray-300'
+                                            errors.eventId ? 'border-red-300' : 'border-gray-300'
                                         }`}
                                         disabled={isEdit}
                                     >
@@ -304,8 +306,8 @@ export const BoothForm = () => {
                                         ))}
                                     </select>
                                 </div>
-                                {errors.event_id && (
-                                    <p className="mt-1 text-sm text-red-600">{errors.event_id}</p>
+                                {errors.eventId && (
+                                    <p className="mt-1 text-sm text-red-600">{errors.eventId}</p>
                                 )}
                                 {isEdit && (
                                     <p className="mt-1 text-xs text-gray-500">編輯時無法更改關聯活動</p>
@@ -323,7 +325,7 @@ export const BoothForm = () => {
                                 <input
                                     type="text"
                                     name="company"
-                                    value={formData.company}
+                                    value={formData.company || ''}
                                     onChange={handleInputChange}
                                     className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                     placeholder="參展商名稱（選填）"
@@ -339,14 +341,14 @@ export const BoothForm = () => {
                         </label>
                         <textarea
                             name="description"
-                            value={formData.description}
+                            value={formData.description || ''}
                             onChange={handleInputChange}
                             rows={3}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             placeholder="攤位描述信息（選填）..."
                             maxLength={200}
                         />
-                        <p className="text-xs text-gray-500 mt-1">{formData.description.length}/200</p>
+                        <p className="text-xs text-gray-500 mt-1">{(formData.description || '').length}/200</p>
                     </div>
 
                     {/* 提交按鈕 */}

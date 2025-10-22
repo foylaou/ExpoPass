@@ -14,7 +14,12 @@ import {
 } from 'lucide-react';
 import { useAppStore } from '../store';
 import { qrcodeServices } from '../services/QRCode/qrcodeServices';
+import { attendeesServices } from '../services/Attendees/attendeesServices';
+import { boothsServices } from '../services/Booths/boothsServices';
 import type { QRCodeStats, BadgeData } from '../services/QRCode/qrcodeType';
+import type { Attendee } from '../services/Attendees/attendeesType';
+import type { Booths } from '../services/Booths/boothsType';
+import toast from 'react-hot-toast';
 
 interface QRCodeItem {
   id: string;
@@ -38,46 +43,6 @@ export const QRCodes = () => {
   const [verifyToken, setVerifyToken] = useState('');
   const [verificationResult, setVerificationResult] = useState<any>(null);
 
-  // 模擬QR碼數據
-  const mockQRCodes: QRCodeItem[] = [
-    {
-      id: '1',
-      type: 'attendee',
-      name: '王小明',
-      company: 'ABC科技公司',
-      identifier: 'B001',
-      qrCodeUrl: 'data:image/png;base64,placeholder',
-      generatedAt: '2024-03-01T10:00:00Z'
-    },
-    {
-      id: '2',
-      type: 'attendee',
-      name: '李美華',
-      company: 'XYZ企業',
-      identifier: 'B002',
-      qrCodeUrl: 'data:image/png;base64,placeholder',
-      generatedAt: '2024-03-01T10:05:00Z'
-    },
-    {
-      id: '3',
-      type: 'booth',
-      name: 'AI科技展台',
-      company: 'Tech Corp',
-      identifier: 'A01',
-      qrCodeUrl: 'data:image/png;base64,placeholder',
-      generatedAt: '2024-03-01T09:30:00Z'
-    },
-    {
-      id: '4',
-      type: 'booth',
-      name: '智慧製造展區',
-      company: 'Smart Manufacturing',
-      identifier: 'B05',
-      qrCodeUrl: 'data:image/png;base64,placeholder',
-      generatedAt: '2024-03-01T09:45:00Z'
-    }
-  ];
-
   useEffect(() => {
     void loadQRCodes();
   }, [currentEvent]);
@@ -90,24 +55,64 @@ export const QRCodes = () => {
 
     try {
       setLoading(true);
-      // 模擬API調用 - 根據選定的展覽載入QR碼
-      setTimeout(() => {
-        setQrCodes(mockQRCodes);
-        setLoading(false);
-      }, 1000);
+      
+      // 並行獲取參展者和攤位資料
+      const [attendeesRes, boothsRes] = await Promise.all([
+        attendeesServices.GetAllAttendees({ eventId: currentEvent.id }),
+        boothsServices.GetAllBooths(currentEvent.id)
+      ]);
+
+      const qrCodeItems: QRCodeItem[] = [];
+
+      // 轉換參展者資料
+      if (attendeesRes.success && attendeesRes.data) {
+        const attendees = attendeesRes.data.attendees || [];
+        attendees.forEach((attendee: Attendee) => {
+          qrCodeItems.push({
+            id: attendee.id,
+            type: 'attendee',
+            name: attendee.name,
+            company: attendee.company,
+            identifier: attendee.badgeNumber || attendee.id.substring(0, 8),
+            qrCodeUrl: `/qrcodes/attendee/${attendee.id}`,
+            generatedAt: new Date().toISOString()
+          });
+        });
+      }
+
+      // 轉換攤位資料
+      if (boothsRes.success && boothsRes.data) {
+        const booths = Array.isArray(boothsRes.data) ? boothsRes.data : [];
+        booths.forEach((booth: Booths) => {
+          qrCodeItems.push({
+            id: booth.id,
+            type: 'booth',
+            name: booth.booth_name,
+            company: booth.company,
+            identifier: booth.booth_number,
+            qrCodeUrl: `/qrcodes/booth/${booth.id}`,
+            generatedAt: new Date().toISOString()
+          });
+        });
+      }
+
+      setQrCodes(qrCodeItems);
     } catch (error) {
       console.error('Failed to load QR codes:', error);
-      setQrCodes(mockQRCodes);
+      toast.error('載入 QR Code 資料失敗');
+      setQrCodes([]);
+    } finally {
       setLoading(false);
     }
   };
 
   // 篩選QR碼
   const filteredQRCodes = qrCodes.filter(item => {
-    const matchesSearch =
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.company?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.identifier.toLowerCase().includes(searchQuery.toLowerCase());
+    const query = searchQuery.toLowerCase();
+    const matchesSearch = !searchQuery.trim() ||
+      item.name?.toLowerCase().includes(query) ||
+      item.company?.toLowerCase().includes(query) ||
+      item.identifier?.toLowerCase().includes(query);
 
     const matchesType = typeFilter === 'all' || item.type === typeFilter;
 
@@ -160,14 +165,14 @@ export const QRCodes = () => {
         link.download = `qrcode_${type}_${id}.png`;
         link.click();
         URL.revokeObjectURL(url);
-        alert('QR碼生成成功！');
+        toast.success('QR碼下載成功！');
         await loadQRCodes();
       } else if (result.success === false) {
-        alert(result.message || 'QR碼生成失敗');
+        toast.error(result.message || 'QR碼生成失敗');
       }
     } catch (error) {
       console.error('Failed to generate QR code:', error);
-      alert('QR碼生成失敗');
+      toast.error('QR碼生成失敗');
     } finally {
       setLoading(false);
     }
@@ -176,7 +181,7 @@ export const QRCodes = () => {
   // 批量生成QR碼
   const batchGenerateQRCodes = async () => {
     if (selectedItems.length === 0) {
-      alert('請選擇要生成QR碼的項目');
+      toast.error('請選擇要生成QR碼的項目');
       return;
     }
 
@@ -187,7 +192,7 @@ export const QRCodes = () => {
       const boothItems = selectedQRCodes.filter(item => item.type === 'booth');
 
       if (!currentEvent) {
-        alert('請先選擇展覽');
+        toast.error('請先選擇展覽');
         return;
       }
 
@@ -215,12 +220,12 @@ export const QRCodes = () => {
         URL.revokeObjectURL(url);
       });
 
-      alert(`成功生成 ${selectedItems.length} 個QR碼`);
+      toast.success(`成功生成 ${selectedItems.length} 個QR碼`);
       setSelectedItems([]);
       await loadQRCodes();
     } catch (error) {
       console.error('Failed to batch generate QR codes:', error);
-      alert('批量生成失敗');
+      toast.error('批量生成失敗');
     } finally {
       setLoading(false);
     }
@@ -238,14 +243,20 @@ export const QRCodes = () => {
   // 批量下載
   const batchDownload = () => {
     if (selectedItems.length === 0) {
-      alert('請選擇要下載的QR碼');
+      toast.error('請選擇要下載的QR碼');
       return;
     }
 
     const selectedQRCodes = qrCodes.filter(item => selectedItems.includes(item.id));
-    selectedQRCodes.forEach(item => {
-      downloadQRCode(item);
+    selectedQRCodes.forEach((item, index) => {
+      setTimeout(() => {
+        const link = document.createElement('a');
+        link.href = item.qrCodeUrl;
+        link.download = `qrcode_${item.type}_${item.identifier}.png`;
+        link.click();
+      }, index * 200); // 延遲下載避免瀏覽器阻擋
     });
+    toast.success(`開始下載 ${selectedQRCodes.length} 個QR碼`);
   };
 
   // 打印QR碼
@@ -285,11 +296,11 @@ export const QRCodes = () => {
       if (response.success && response.data) {
         setPreviewBadge(response.data);
       } else {
-        alert(response.message || '獲取名牌資料失敗');
+        toast.error(response.message || '獲取名牌資料失敗');
       }
     } catch (error) {
       console.error('Failed to get badge data:', error);
-      alert('獲取名牌資料失敗');
+      toast.error('獲取名牌資料失敗');
     } finally {
       setLoading(false);
     }
@@ -298,28 +309,31 @@ export const QRCodes = () => {
   // 載入統計資料
   const loadStats = async () => {
     if (!currentEvent) {
-      alert('請先選擇展覽');
+      toast.error('請先選擇展覽');
       return;
     }
 
     try {
+      setLoading(true);
       const response = await qrcodeServices.getQRCodeStats(currentEvent.id);
       if (response.success && response.data) {
         setStats(response.data);
         setShowStatsModal(true);
       } else {
-        alert(response.message || '獲取統計資料失敗');
+        toast.error(response.message || '獲取統計資料失敗');
       }
     } catch (error) {
       console.error('Failed to get stats:', error);
-      alert('獲取統計資料失敗');
+      toast.error('獲取統計資料失敗');
+    } finally {
+      setLoading(false);
     }
   };
 
   // 驗證Token
   const handleVerifyToken = async () => {
     if (!verifyToken.trim()) {
-      alert('請輸入要驗證的Token');
+      toast.error('請輸入要驗證的Token');
       return;
     }
 
@@ -328,12 +342,15 @@ export const QRCodes = () => {
       const response = await qrcodeServices.verifyToken(verifyToken);
       if (response.success && response.data) {
         setVerificationResult(response.data);
+        toast.success('Token 驗證完成');
       } else {
-        alert(response.message || 'Token驗證失敗');
+        toast.error(response.message || 'Token驗證失敗');
+        setVerificationResult(null);
       }
     } catch (error) {
       console.error('Failed to verify token:', error);
-      alert('Token驗證失敗');
+      toast.error('Token驗證失敗');
+      setVerificationResult(null);
     } finally {
       setLoading(false);
     }
@@ -573,7 +590,16 @@ export const QRCodes = () => {
 
                 {/* QR碼預覽 */}
                 <div className="bg-white rounded-lg p-4 mb-4 text-center">
-                  <div className="w-32 h-32 bg-gray-200 rounded-lg mx-auto mb-2 flex items-center justify-center">
+                  <img 
+                    src={item.qrCodeUrl} 
+                    alt="QR Code"
+                    className="w-32 h-32 mx-auto mb-2 object-contain"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.nextElementSibling!.classList.remove('hidden');
+                    }}
+                  />
+                  <div className="w-32 h-32 bg-gray-200 rounded-lg mx-auto mb-2 hidden items-center justify-center">
                     <QrCode className="w-16 h-16 text-gray-400" />
                   </div>
                   <p className="text-xs text-gray-500">QR Code</p>

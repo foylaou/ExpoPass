@@ -72,7 +72,7 @@ export class BoothService {
      */
     async create(dto: CreateBoothDto): Promise<Booth> {
         // 檢查攤位編號是否重複（同一展覽內）
-        const existing = await this.findByBoothNumber(dto.event_id, dto.booth_number);
+        const existing = await this.findByBoothNumber(dto.eventId, dto.boothNumber);
         if (existing) {
             throw new Error('Booth number already exists in this event');
         }
@@ -93,14 +93,14 @@ export class BoothService {
 
         for (const boothData of dto.booths) {
             // 檢查攤位編號是否重複
-            const existing = await this.findByBoothNumber(dto.event_id, boothData.booth_number);
+            const existing = await this.findByBoothNumber(dto.eventId, boothData.boothNumber);
             if (existing) {
-                console.warn(`Skipping duplicate booth number: ${boothData.booth_number}`);
+                console.warn(`Skipping duplicate booth number: ${boothData.boothNumber}`);
                 continue;
             }
 
             const booth = this.boothRepository.create({
-                eventId: dto.event_id,
+                eventId: dto.eventId,
                 ...boothData,
                 qrCodeToken: this.generateToken(),
             });
@@ -122,8 +122,8 @@ export class BoothService {
         }
 
         // 如果要更新攤位編號，檢查是否重複
-        if (dto.booth_number && dto.booth_number !== booth.boothNumber) {
-            const existing = await this.findByBoothNumber(booth.eventId, dto.booth_number);
+        if (dto.boothNumber && dto.boothNumber !== booth.boothNumber) {
+            const existing = await this.findByBoothNumber(booth.eventId, dto.boothNumber);
             if (existing && existing.id !== id) {
                 throw new Error('Booth number already exists in this event');
             }

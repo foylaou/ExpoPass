@@ -19,6 +19,11 @@ export default defineConfig({
                 secure: false,
                 // 不要移除 /api 前綴，讓後端處理完整路徑
             },
+            '/qrcodes': {
+                target: 'http://localhost:3000',
+                changeOrigin: true,
+                secure: false,
+            },
         }
     },
 

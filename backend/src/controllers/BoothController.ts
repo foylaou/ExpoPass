@@ -225,7 +225,7 @@ export class BoothController {
 
     /**
      * @swagger
-     * /api/booths/{id}/stats:
+     * /api/booths/booth/{id}/stats:
      *   get:
      *     summary: 取得攤位的掃描統計
      *     tags: [Booths]
@@ -258,7 +258,7 @@ export class BoothController {
      *       404:
      *         description: 攤位不存在
      */
-    @Get('/:id/stats')
+    @Get('/booth/:id/stats')
     async getBoothStats(@Param('id') id: string) {
         const stats = await this.boothService.getScanStats(id);
         if (!stats) {
@@ -269,7 +269,7 @@ export class BoothController {
 
     /**
      * @swagger
-     * /api/booths/{id}/visitors:
+     * /api/booths/booth/{id}/visitors:
      *   get:
      *     summary: 取得攤位的訪客列表
      *     tags: [Booths]
@@ -303,14 +303,14 @@ export class BoothController {
      *                   attendee:
      *                     $ref: '#/components/schemas/Attendee'
      */
-    @Get('/:id/visitors')
+    @Get('/booth/:id/visitors')
     async getBoothVisitors(@Param('id') id: string) {
         return await this.boothService.getVisitors(id);
     }
 
     /**
      * @swagger
-     * /api/booths/{id}/daily-stats:
+     * /api/booths/booth/{id}/daily-stats:
      *   get:
      *     summary: 取得攤位的每日統計
      *     tags: [Booths]
@@ -352,7 +352,7 @@ export class BoothController {
      *                   total_scans:
      *                     type: integer
      */
-    @Get('/:id/daily-stats')
+    @Get('/booth/:id/daily-stats')
     async getBoothDailyStats(
         @Param('id') id: string,
         @QueryParam('startDate') startDate?: Date,
@@ -363,7 +363,7 @@ export class BoothController {
 
     /**
      * @swagger
-     * /api/booths/{id}/hourly-stats:
+     * /api/booths/booth/{id}/hourly-stats:
      *   get:
      *     summary: 取得攤位的每小時統計
      *     tags: [Booths]
@@ -398,7 +398,7 @@ export class BoothController {
      *                   total_scans:
      *                     type: integer
      */
-    @Get('/:id/hourly-stats')
+    @Get('/booth/:id/hourly-stats')
     async getBoothHourlyStats(
         @Param('id') id: string,
         @QueryParam('date') date?: Date
@@ -408,7 +408,7 @@ export class BoothController {
 
     /**
      * @swagger
-     * /api/booths/{id}/repeat-visitors:
+     * /api/booths/booth/{id}/repeat-visitors:
      *   get:
      *     summary: 取得攤位的重複訪客
      *     tags: [Booths]
@@ -446,7 +446,7 @@ export class BoothController {
      *                     type: string
      *                     format: date-time
      */
-    @Get('/:id/repeat-visitors')
+    @Get('/booth/:id/repeat-visitors')
     async getRepeatVisitors(@Param('id') id: string) {
         return await this.boothService.getRepeatVisitors(id);
     }
@@ -497,19 +497,19 @@ export class BoothController {
      *           schema:
      *             type: object
      *             required:
-     *               - event_id
-     *               - booth_number
-     *               - booth_name
+     *               - eventId
+     *               - boothNumber
+     *               - boothName
      *             properties:
-     *               event_id:
+     *               eventId:
      *                 type: string
      *                 format: uuid
      *                 description: 展覽活動ID
-     *               booth_number:
+     *               boothNumber:
      *                 type: string
      *                 maxLength: 50
      *                 description: 攤位編號
-     *               booth_name:
+     *               boothName:
      *                 type: string
      *                 maxLength: 200
      *                 description: 攤位名稱
@@ -563,10 +563,10 @@ export class BoothController {
      *           schema:
      *             type: object
      *             required:
-     *               - event_id
+     *               - eventId
      *               - booths
      *             properties:
-     *               event_id:
+     *               eventId:
      *                 type: string
      *                 format: uuid
      *                 description: 展覽活動ID
@@ -575,13 +575,13 @@ export class BoothController {
      *                 items:
      *                   type: object
      *                   required:
-     *                     - booth_number
-     *                     - booth_name
+     *                     - boothNumber
+     *                     - boothName
      *                   properties:
-     *                     booth_number:
+     *                     boothNumber:
      *                       type: string
      *                       maxLength: 50
-     *                     booth_name:
+     *                     boothName:
      *                       type: string
      *                       maxLength: 200
      *                     company:
@@ -639,11 +639,11 @@ export class BoothController {
      *           schema:
      *             type: object
      *             properties:
-     *               booth_number:
+     *               boothNumber:
      *                 type: string
      *                 maxLength: 50
      *                 description: 攤位編號
-     *               booth_name:
+     *               boothName:
      *                 type: string
      *                 maxLength: 200
      *                 description: 攤位名稱
@@ -708,11 +708,11 @@ export class BoothController {
      */
     @Delete('/:id')
     @HttpCode(204)
-    async deleteBooth(@Param('id') id: string): Promise<void> {
+    async deleteBooth(@Param('id') id: string): Promise<any> {
         const deleted = await this.boothService.delete(id);
         if (!deleted) {
             throw new NotFoundError('攤位不存在');
         }
+        return {};
     }
-
 }

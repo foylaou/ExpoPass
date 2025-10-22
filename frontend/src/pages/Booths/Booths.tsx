@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
     Plus,
@@ -38,7 +38,7 @@ export const BoothsPage = () => {
     const loadBooths = async () => {
         try {
             setLoading(true);
-            const response = await boothsServices.GetAllBooths();
+            const response = await boothsServices.GetAllBooths(currentEvent?.id);
             if (response.success && response.data) {
                 setBooths(response.data);
             } else {
@@ -53,13 +53,13 @@ export const BoothsPage = () => {
     };
 
     useEffect(() => {
-        loadBooths();
+       void loadBooths();
     }, [currentEvent]);
 
     // 搜尋攤位（使用 API）
     const handleSearch = async () => {
         if (!searchQuery.trim() || !currentEvent?.id) {
-            loadBooths();
+            await loadBooths();
             return;
         }
 
@@ -95,7 +95,7 @@ export const BoothsPage = () => {
 
             if (response.success && response.data) {
                 alert(`匯入成功！總計：${response.data.total}，成功：${response.data.success}，失敗：${response.data.failed}`);
-                loadBooths(); // 重新載入列表
+                await loadBooths(); // 重新載入列表
                 setShowImportModal(false);
             } else {
                 alert(response.message || '匯入失敗');
@@ -149,7 +149,7 @@ export const BoothsPage = () => {
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-            handleImport(file);
+            void handleImport(file);
         }
     };
 

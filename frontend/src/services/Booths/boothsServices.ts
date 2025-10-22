@@ -37,7 +37,7 @@ export const boothsServices = {
             const response = await api.get(`${query}`, {
                 headers: { 'Content-Type': 'application/json' },
             });
-            
+
             // 檢查回應格式
             if (Array.isArray(response.data)) {
                 // 後端直接返回陣列
@@ -51,7 +51,7 @@ export const boothsServices = {
                     return { success: true, data: response.data.data };
                 }
             }
-            
+
             return response.data;
         } catch (e) {
             console.error(`GetAllBooths Error:`, e);
@@ -123,7 +123,7 @@ export const boothsServices = {
      */
     async GetBoothStats(id: string): Promise<ApiResponse<GetBoothStatsResponse>> {
         try {
-            const response = await api.get(`/${encodeURIComponent(id)}/stats`, {
+            const response = await api.get(`/booth/${encodeURIComponent(id)}/stats`, {
                 headers: { 'Content-Type': 'application/json' },
             });
             return response.data;
@@ -145,7 +145,7 @@ export const boothsServices = {
      */
     async GetBoothVisitors(id: string): Promise<ApiResponse<GetBoothVisitorsResponse[]>> {
         try {
-            const response = await api.get(`/${encodeURIComponent(id)}/visitors`, {
+            const response = await api.get(`/booth/${encodeURIComponent(id)}/visitors`, {
                 headers: { 'Content-Type': 'application/json' },
             });
             return response.data;
@@ -172,7 +172,7 @@ export const boothsServices = {
             // 若有查詢條件則加上 '?'
             const queryString = params.length ? `?${params.join('&')}` : '';
 
-            const response = await api.get(`/${data.id}/daily-stats${queryString}`, {
+            const response = await api.get(`/booth/${data.id}/daily-stats${queryString}`, {
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -201,7 +201,7 @@ export const boothsServices = {
 
             const queryString = params.length ? `?${params.join('&')}` : '';
 
-            const response = await api.get(`/${data.id}/hourly-stats${queryString}`, {
+            const response = await api.get(`/booth/${data.id}/hourly-stats${queryString}`, {
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -227,7 +227,7 @@ export const boothsServices = {
      */
     async GetBoothRepeatVisitor(id: string): Promise<ApiResponse<GetBoothRepeatVisitorResponse[]>> {
         try {
-            const response = await api.get(`/${id}/repeat-visitors`, {
+            const response = await api.get(`/booth/${id}/repeat-visitors`, {
                 headers: {
                     'Content-Type': 'application/json',
                 },
@@ -259,7 +259,7 @@ export const boothsServices = {
             });
             console.log('[GetBoothById] 回應:', response);
             console.log('[GetBoothById] 回應資料:', response.data);
-            
+
             // 檢查回應格式
             if (response.data && typeof response.data === 'object') {
                 if (response.data.success !== undefined) {
@@ -269,7 +269,7 @@ export const boothsServices = {
                     return { success: true, data: response.data };
                 }
             }
-            
+
             return response.data;
         } catch (e: any) {
             console.error(`GetBoothById Error:`, e);
@@ -294,7 +294,7 @@ export const boothsServices = {
             const response = await api.put(`/${encodeURIComponent(id)}`, data, {
                 headers: { 'Content-Type': 'application/json' },
             });
-            return response.data;
+            return {success:true,message:"ok",data:response.data};
         } catch (e) {
             console.error(`UpdateBoothById Error:`, e);
             return { success: false, message: "更新攤位失敗，請稍後再試。" };
@@ -316,12 +316,7 @@ export const boothsServices = {
             const response = await api.delete(`/${encodeURIComponent(id)}`, {
                 headers: { 'Content-Type': 'application/json' },
             });
-
-            if (response.status === 204) {
-                return { success: true, message: "刪除成功。" };
-            } else {
-                return { success: false, message: "刪除攤位失敗或攤位不存在。" };
-            }
+            return {success:true,message:"ok",data:response.data};
         } catch (e) {
             console.error(`DeleteBoothById Error:`, e);
             return { success: false, message: "刪除攤位失敗，請稍後再試。" };

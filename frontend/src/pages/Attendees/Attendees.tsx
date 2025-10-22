@@ -26,10 +26,10 @@ export const Attendees = () => {
   const [attendees, setAttendees] = useState<Attendee[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [companyFilter, setCompanyFilter] = useState('');
-  const [useServerSearch, setUseServerSearch] = useState(false);
+  const [_useServerSearch, setUseServerSearch] = useState(false);
 
 
-  // 获取参展者列表
+  // 獲取參展者列表
   const loadAttendees = async () => {
     try {
       setLoading(true);
@@ -97,36 +97,37 @@ export const Attendees = () => {
   }, [searchQuery]);
 
 
-  // 筛选参展者（僅針對公司過濾）
+  // 篩選參展者（僅針對公司過濾）
   const filteredAttendees = attendees.filter(attendee => {
     const matchesCompany = !companyFilter || attendee.company === companyFilter;
     return matchesCompany;
   });
 
-  // 获取所有公司列表
+  // 獲取所有公司列表
   const companies = Array.from(new Set(attendees.map(a => a.company).filter(Boolean)));
 
-  // 删除参展者
+  // 刪除參展者
   const handleDelete = async (id: string) => {
-    if (window.confirm('确定要删除此参展者吗？')) {
+    if (window.confirm('確定要刪除此參展者嗎？')) {
       try {
         setLoading(true);
         const response = await attendeesServices.DeleteAttendee(id);
         if (response.success) {
           setAttendees(attendees.filter(a => a.id !== id));
+          toast.success('刪除成功');
         } else {
-          alert(response.message || '刪除失敗');
+          toast.error(response.message || '刪除失敗');
         }
       } catch (error) {
         console.error('Failed to delete attendee:', error);
-        alert('刪除參展者時發生錯誤');
+        toast.error('刪除參展者時發生錯誤');
       } finally {
         setLoading(false);
       }
     }
   };
 
-  // 批量导入
+  // 批量導入
   const handleImport = () => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -188,7 +189,7 @@ export const Attendees = () => {
     }
   };
 
-  // 导出数据
+  // 導出數據
   const handleExport = async () => {
     if (!currentEvent) {
       toast.error('請先選擇活動');
@@ -201,7 +202,7 @@ export const Attendees = () => {
         eventId: currentEvent.id,
         format: 'xlsx'
       });
-      const filename = `attendees_${currentEvent.name}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      const filename = `attendees_${currentEvent.eventName}_${new Date().toISOString().split('T')[0]}.xlsx`;
       downloadFile(blob, filename);
       toast.success('匯出成功');
     } catch (error) {
@@ -232,10 +233,10 @@ export const Attendees = () => {
 
   return (
     <div className="space-y-6">
-      {/* 页面头部 */}
+      {/* 頁面頭部 */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">参展者管理</h1>
+          <h1 className="text-2xl font-bold text-gray-900">參展者管理</h1>
           <p className="text-gray-600">管理參展人員資訊</p>
         </div>
 
@@ -270,7 +271,7 @@ export const Attendees = () => {
             className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
           >
             <Plus className="w-4 h-4 mr-2" />
-            新增参展者
+            新增參展者
           </Link>
         </div>
       </div>
@@ -290,7 +291,7 @@ export const Attendees = () => {
             />
           </div>
 
-          {/* 公司筛选 */}
+          {/* 公司篩選 */}
           <div className="relative">
             <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
             <select
@@ -327,7 +328,7 @@ export const Attendees = () => {
               <Building className="w-6 h-6 text-green-600" />
             </div>
             <div className="ml-4">
-              <p className="text-sm text-gray-600">参展公司</p>
+              <p className="text-sm text-gray-600">參展公司</p>
               <p className="text-2xl font-bold text-gray-900">{companies.length}</p>
             </div>
           </div>
@@ -360,7 +361,7 @@ export const Attendees = () => {
         </div>
       </div>
 
-      {/* 参展者列表 */}
+      {/* 參展者列表 */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
         {filteredAttendees.length === 0 ? (
           <div className="text-center py-12">
@@ -377,7 +378,7 @@ export const Attendees = () => {
                 className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                新增参展者
+                新增參展者
               </Link>
             )}
           </div>
@@ -387,7 +388,7 @@ export const Attendees = () => {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    参展者資訊
+                    參展者資訊
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     聯絡方式
@@ -454,18 +455,19 @@ export const Attendees = () => {
 
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end space-x-2">
-                        <Link
-                          to={`/qrcodes/attendee/${attendee.id}`}
+                        <a
+                          href={`/qrcodes/attendee/${attendee.id}`}
+                          download={`qrcode-${attendee.badgeNumber || attendee.name}.png`}
                           className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-md transition-colors"
-                          title="生成QR码"
+                          title="下載QR碼"
                         >
                           <QrCode className="w-4 h-4" />
-                        </Link>
+                        </a>
 
                         <Link
                           to={`/attendees/${attendee.id}/edit`}
                           className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-md transition-colors"
-                          title="编辑"
+                          title="編輯"
                         >
                           <Edit className="w-4 h-4" />
                         </Link>
@@ -473,7 +475,7 @@ export const Attendees = () => {
                         <button
                           onClick={() => handleDelete(attendee.id)}
                           className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                          title="删除"
+                          title="刪除"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -487,7 +489,7 @@ export const Attendees = () => {
         )}
       </div>
 
-      {/* 分页 */}
+      {/* 分頁 */}
       {filteredAttendees.length > 0 && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="flex items-center justify-between">

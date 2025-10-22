@@ -54,7 +54,6 @@ export const useAppStore = create<AppStore>((set) => ({
     error: null,
     setError: (error) => set({ error }),
 }));
-
 export const useDashboardStore = create<DashboardStore>((set) => ({
     stats: null,
     liveData: null,

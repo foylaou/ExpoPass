@@ -6,8 +6,8 @@ import type { Attendee } from "../Attendees/attendeesType.ts";
  * @interface Booths
  * @description 定義單一攤位的完整資料結構。
  * @property {string} id - 攤位唯一識別碼
- * @property {string} booth_number - 攤位編號
- * @property {string} booth_name - 攤位名稱
+ * @property {string} boothNumber - 攤位編號 (camelCase from backend)
+ * @property {string} boothName - 攤位名稱 (camelCase from backend)
  * @property {string} company - 所屬公司名稱
  * @property {string} description - 攤位簡介或說明
  * @property {string} location - 攤位位置（如展場區域或座標）
@@ -15,8 +15,8 @@ import type { Attendee } from "../Attendees/attendeesType.ts";
  */
 export interface Booths {
     id: string;
-    booth_number: string;
-    booth_name: string;
+    boothNumber: string;
+    boothName: string;
     company: string;
     description: string;
     location: string;
@@ -27,17 +27,17 @@ export interface Booths {
  * 建立攤位請求介面
  * @interface CreateBoothsRequest
  * @description 定義建立單一攤位時所需的請求資料。
- * @property {string} event_id - 所屬活動唯一識別碼
- * @property {string} booth_number - 攤位編號
- * @property {string} booth_name - 攤位名稱
+ * @property {string} eventId - 所屬活動唯一識別碼
+ * @property {string} boothNumber - 攤位編號
+ * @property {string} boothName - 攤位名稱
  * @property {string} company - 公司名稱
  * @property {string} description - 攤位簡介
  * @property {string} location - 攤位位置
  */
 export interface CreateBoothsRequest {
-    event_id: string;
-    booth_number: string;
-    booth_name: string;
+    eventId: string;
+    boothNumber: string;
+    boothName: string;
     company: string;
     description: string;
     location: string;
@@ -59,15 +59,15 @@ export interface SearchBoothsRequest {
  * 更新攤位請求介面
  * @interface UpdateBoothsRequest
  * @description 定義更新攤位資料時所需的請求欄位。
- * @property {string} booth_number - 攤位編號
- * @property {string} booth_name - 攤位名稱
+ * @property {string} boothNumber - 攤位編號
+ * @property {string} boothName - 攤位名稱
  * @property {string} company - 公司名稱
  * @property {string} description - 攤位簡介
  * @property {string} location - 攤位位置
  */
 export interface UpdateBoothsRequest {
-    booth_number: string;
-    booth_name: string;
+    boothNumber: string;
+    boothName: string;
     company: string;
     description: string;
     location: string;
