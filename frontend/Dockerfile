@@ -28,7 +28,7 @@ COPY frontend ./frontend
 
 # Build the application
 WORKDIR /app/frontend
-RUN pnpm build
+RUN pnpm run build
 
 # ============================================
 # Stage 2: Production Stage with Nginx
