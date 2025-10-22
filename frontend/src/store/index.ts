@@ -40,6 +40,7 @@ interface EventStore {
     deleteEvent: (id: string) => void;
 }
 
+
 export const useAppStore = create<AppStore>((set) => ({
     currentEvent: null,
     setCurrentEvent: (event) => set({ currentEvent: event }),
