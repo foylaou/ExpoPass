@@ -17,7 +17,11 @@ export class ScanRecord {
   @Column({ name: 'event_id', type: 'uuid' })
   eventId!: string;
 
-  @CreateDateColumn({ name: 'scanned_at' })
+  @CreateDateColumn({ 
+    name: 'scanned_at',
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP'
+  })
   scannedAt!: Date;
 
   @Column({ type: 'text', nullable: true })

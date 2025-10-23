@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Scanner } from '@yudiel/react-qr-scanner';
-import { qrcodeServices } from '../services/QRCode/qrcodeServices';
+import { authServices } from '../services/Auth/authServices';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -22,30 +22,26 @@ export const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onClose }) => {
     
     setIsLoading(true);
     try {
-      // 使用 qrcodeServices.verifyToken 驗證 QR Code
-      const response = await qrcodeServices.verifyToken(scannedToken);
+      // 使用 authServices.VerifyQRCode 驗證 QR Code Token
+      const response = await authServices.VerifyQRCode(scannedToken);
       
       if (response.success && response.data) {
-        const { valid, type, info } = response.data;
+        // response.data 包含: { token: JWT, type: 'attendee'|'booth', data: user資訊 }
+        const { token, type, data } = response.data;
         
-        if (!valid) {
-          toast.error('QR Code 無效或已過期');
-          setIsLoading(false);
-          return;
-        }
-
-        // 根據 type 判斷是參展者還是攤位
+        // 根據 type 判斷角色
         const role = type === 'booth' ? 'booth' : 'attendee';
         
-        // 從 info 中獲取使用者資訊
-        login(scannedToken, role, {
-          id: info?.id || '',
-          name: info?.name || '',
-          company: info?.company,
-          boothNumber: info?.booth_number,
+        // 儲存 JWT token 並登入（持久化到 localStorage）
+        login(token, role, {
+          id: data?.id || '',
+          name: data?.name || '',
+          company: data?.company,
+          boothNumber: data?.boothNumber || data?.booth_number,
+          qrCodeToken: scannedToken,
         });
         
-        toast.success(`歡迎，${info?.name || '使用者'}！`);
+        toast.success(`歡迎，${data?.name || '使用者'}！`);
         navigate('/dashboard');
         if (onClose) onClose();
       } else {

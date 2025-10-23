@@ -36,11 +36,16 @@ export class ScanService {
         booth: Booth;
         is_first_visit: boolean;
     }> {
+        console.log('=== createByToken called ===');
+        console.log('Input:', dto);
+        
         // 驗證參展人員 Token
         const attendee = await this.attendeeRepository.findOne({
             where: { qrCodeToken: dto.attendee_token },
             relations: ['event'],
         });
+
+        console.log('Attendee found:', attendee ? `ID: ${attendee.id}, eventId: ${attendee.eventId}` : 'null');
 
         if (!attendee) {
             throw new Error('Invalid attendee token');
@@ -52,11 +57,14 @@ export class ScanService {
             relations: ['event'],
         });
 
+        console.log('Booth found:', booth ? `ID: ${booth.id}, eventId: ${booth.eventId}` : 'null');
+
         if (!booth) {
             throw new Error('Invalid booth token');
         }
 
         // 檢查是否屬於同一展覽
+        console.log('Comparing eventIds:', { attendeeEventId: attendee.eventId, boothEventId: booth.eventId });
         if (attendee.eventId !== booth.eventId) {
             throw new Error('Attendee and booth must belong to the same event');
         }
@@ -71,19 +79,19 @@ export class ScanService {
 
         const isFirstVisit = !previousVisit;
 
-        // 建立掃描記錄
-        const scan = this.scanRepository.create({
-            attendeeId: attendee.id,
-            boothId: booth.id,
-            eventId: attendee.eventId,
-            notes: dto.notes,
-        });
+        // 建立掃描記錄（使用原始 SQL 確保 UTC 時間）
+        const result = await this.scanRepository.query(
+            `INSERT INTO scan_records (attendee_id, booth_id, event_id, notes, scanned_at) 
+             VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP) 
+             RETURNING id`,
+            [attendee.id, booth.id, attendee.eventId, dto.notes || null]
+        );
 
-        const savedScan = await this.scanRepository.save(scan);
+        const savedScanId = result[0].id;
 
         // 重新載入關聯資料
         const scanWithRelations = await this.scanRepository.findOne({
-            where: { id: savedScan.id },
+            where: { id: savedScanId },
             relations: ['attendee', 'booth', 'event'],
         });
 

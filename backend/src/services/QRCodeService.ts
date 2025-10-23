@@ -240,7 +240,7 @@ export class QRCodeService {
      * 驗證 QR Code Token 或 ID
      * 支援格式：
      * - QR Code Token: ATT_xxx 或 BOOTH_xxx
-     * - UUID: 直接使用 ID 查詢
+     * - UUID: 可以是 qrCodeToken 或 id
      */
     async verifyToken(token: string): Promise<{
         valid: boolean;
@@ -249,7 +249,7 @@ export class QRCodeService {
     }> {
         console.log('[QRCodeService] verifyToken called with token:', token);
         
-        // 檢查是否為參展人員 Token
+        // 檢查是否為參展人員 Token (ATT_ 前綴)
         if (token.startsWith('ATT_')) {
             const attendee = await this.attendeeRepository.findOne({
                 where: { qrCodeToken: token },
@@ -265,7 +265,7 @@ export class QRCodeService {
             }
         }
 
-        // 檢查是否為攤位 Token
+        // 檢查是否為攤位 Token (BOOTH_ 前綴)
         if (token.startsWith('BOOTH_')) {
             const booth = await this.boothRepository.findOne({
                 where: { qrCodeToken: token },
@@ -281,12 +281,40 @@ export class QRCodeService {
             }
         }
 
-        // 如果不是 token 格式，嘗試用 UUID 查詢
+        // 如果不是帶前綴的 token，嘗試用 UUID 查詢
         // 先檢查是否為有效的 UUID 格式
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         if (uuidRegex.test(token)) {
-            // 嘗試用 ID 查詢 Attendee
-            const attendee = await this.attendeeRepository.findOne({
+            // 先嘗試用 qrCodeToken 查詢 Attendee
+            let attendee = await this.attendeeRepository.findOne({
+                where: { qrCodeToken: token },
+                relations: ['event'],
+            });
+
+            if (attendee) {
+                return {
+                    valid: true,
+                    type: 'attendee',
+                    data: attendee,
+                };
+            }
+
+            // 再嘗試用 qrCodeToken 查詢 Booth
+            let booth = await this.boothRepository.findOne({
+                where: { qrCodeToken: token },
+                relations: ['event'],
+            });
+
+            if (booth) {
+                return {
+                    valid: true,
+                    type: 'booth',
+                    data: booth,
+                };
+            }
+
+            // 最後嘗試用 ID 查詢 Attendee
+            attendee = await this.attendeeRepository.findOne({
                 where: { id: token },
                 relations: ['event'],
             });
@@ -299,8 +327,8 @@ export class QRCodeService {
                 };
             }
 
-            // 嘗試用 ID 查詢 Booth
-            const booth = await this.boothRepository.findOne({
+            // 最後嘗試用 ID 查詢 Booth
+            booth = await this.boothRepository.findOne({
                 where: { id: token },
                 relations: ['event'],
             });

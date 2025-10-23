@@ -9,6 +9,7 @@ interface User {
   name?: string;
   company?: string;
   boothNumber?: string;
+  qrCodeToken?: string;
 }
 
 interface AuthContextType {

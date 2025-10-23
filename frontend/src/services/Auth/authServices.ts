@@ -1,6 +1,6 @@
 import axios from "axios";
 import type {ApiResponse} from "../apiTypes";
-import type {adminLoginRequest} from "./authType.ts";
+import type {adminLoginRequest, VerifyQRCodeResponse} from "./authType.ts";
 
 
 const service_name: string = "auth"
@@ -21,7 +21,7 @@ export const authServices = {
      * @param token
      * @constructor
      */
-    async VerifyQRCode(token: string): Promise<ApiResponse<string>> {
+    async VerifyQRCode(token: string): Promise<ApiResponse<VerifyQRCodeResponse>> {
         try {
             const response = await api.post(`verify-qr`, {"token": token},
                 {

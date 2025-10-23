@@ -3,16 +3,18 @@ import { QrCode, Download, Loader, X } from 'lucide-react';
 import { qrcodeServices } from '../services/QRCode/qrcodeServices';
 import toast from 'react-hot-toast';
 
-interface AttendeeQRCodeProps {
-  attendeeId: string;
-  attendeeName?: string;
+interface BoothQRCodeProps {
+  boothId: string;
+  boothName?: string;
+  boothNumber?: string;
   size?: number;
   onClose?: () => void;
 }
 
-export const AttendeeQRCode: React.FC<AttendeeQRCodeProps> = ({
-  attendeeId,
-  attendeeName,
+export const BoothQRCode: React.FC<BoothQRCodeProps> = ({ 
+  boothId, 
+  boothName,
+  boothNumber,
   size = 300,
   onClose
 }) => {
@@ -21,16 +23,16 @@ export const AttendeeQRCode: React.FC<AttendeeQRCodeProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    void loadQRCode();
-  }, [attendeeId]);
+    loadQRCode();
+  }, [boothId]);
 
   const loadQRCode = async () => {
     setLoading(true);
     setError(null);
-
+    
     try {
-      const response = await qrcodeServices.generateAttendeeQRCode({
-        id: attendeeId,
+      const response = await qrcodeServices.generateBoothQRCode({
+        id: boothId,
         size: size,
         format: 'png',
       });
@@ -39,7 +41,7 @@ export const AttendeeQRCode: React.FC<AttendeeQRCodeProps> = ({
         // 將 Blob 轉換為 URL
         const url = URL.createObjectURL(response);
         setQrCodeUrl(url);
-      } else if (!response.success) {
+      } else if (response.success === false) {
         setError(response.message || '生成 QR Code 失敗');
         toast.error(response.message || '生成 QR Code 失敗');
       }
@@ -55,7 +57,7 @@ export const AttendeeQRCode: React.FC<AttendeeQRCodeProps> = ({
     if (qrCodeUrl) {
       const link = document.createElement('a');
       link.href = qrCodeUrl;
-      link.download = `qrcode-${attendeeName || attendeeId}.png`;
+      link.download = `booth-qrcode-${boothNumber || boothId}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -76,8 +78,8 @@ export const AttendeeQRCode: React.FC<AttendeeQRCodeProps> = ({
     return (
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div className="flex flex-col items-center justify-center space-y-4">
-          <Loader className="w-12 h-12 text-blue-600 animate-spin" />
-          <p className="text-gray-600">生成 QR Code 中...</p>
+          <Loader className="w-12 h-12 text-purple-600 animate-spin" />
+          <p className="text-gray-600">生成攤位 QR Code 中...</p>
         </div>
       </div>
     );
@@ -104,13 +106,13 @@ export const AttendeeQRCode: React.FC<AttendeeQRCodeProps> = ({
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
-          <QrCode className="w-5 h-5 text-blue-600" />
-          <span>您的 QR Code</span>
+          <QrCode className="w-5 h-5 text-purple-600" />
+          <span>攤位 QR Code</span>
         </h3>
         <div className="flex items-center space-x-2">
           <button
             onClick={handleDownload}
-            className="flex items-center space-x-2 px-3 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            className="flex items-center space-x-2 px-3 py-2 text-sm bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
           >
             <Download className="w-4 h-4" />
             <span>下載</span>
@@ -130,20 +132,23 @@ export const AttendeeQRCode: React.FC<AttendeeQRCodeProps> = ({
         {qrCodeUrl && (
           <>
             <div className="bg-white p-4 rounded-lg border-2 border-gray-200">
-              <img
-                src={qrCodeUrl}
-                alt="Attendee QR Code"
+              <img 
+                src={qrCodeUrl} 
+                alt="Booth QR Code" 
                 className="w-full h-auto"
                 style={{ maxWidth: `${size}px` }}
               />
             </div>
             <div className="text-center">
-              <p className="text-sm text-gray-600">
-                請將此 QR Code 出示給攤位人員掃描
+              <p className="text-sm font-medium text-gray-900">
+                {boothName}
               </p>
-              {attendeeName && (
-                <p className="text-xs text-gray-500 mt-1">{attendeeName}</p>
+              {boothNumber && (
+                <p className="text-xs text-gray-500 mt-1">攤位編號: {boothNumber}</p>
               )}
+              <p className="text-xs text-gray-600 mt-2">
+                參展人員掃描此 QR Code 以記錄訪問
+              </p>
             </div>
           </>
         )}

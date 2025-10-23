@@ -16,6 +16,7 @@ import {
   FileDown
 } from 'lucide-react';
 import { useAppStore } from '../../store';
+import { AttendeeQRCode } from '../../components/AttendeeQRCode';
 import { attendeesServices } from '../../services/Attendees/attendeesServices.ts';
 import type { Attendee } from '../../services/Attendees/attendeesType.ts';
 import { importServices, exportServices, downloadFile } from '../../services/Import-Export/import-exportServices.ts';
@@ -27,6 +28,7 @@ export const Attendees = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [companyFilter, setCompanyFilter] = useState('');
   const [_useServerSearch, setUseServerSearch] = useState(false);
+  const [selectedAttendeeForQR, setSelectedAttendeeForQR] = useState<Attendee | null>(null);
 
 
   // 獲取參展者列表
@@ -39,6 +41,7 @@ export const Attendees = () => {
         if (response.success && response.data) {
           setAttendees(response.data.attendees || []);
         } else {
+            toast.error(response.message|| '獲取參展者列表失敗')
           throw new Error(response.message || '獲取參展者列表失敗');
         }
       } else {
@@ -54,7 +57,7 @@ export const Attendees = () => {
   };
 
   useEffect(() => {
-    loadAttendees();
+    void loadAttendees();
   }, [currentEvent]);
 
   // 搜尋功能：使用後端API搜尋
@@ -86,10 +89,10 @@ export const Attendees = () => {
     // 防抖處理
     const timeoutId = setTimeout(() => {
       if (searchQuery.trim()) {
-        searchAttendees();
+        void searchAttendees();
       } else {
         setUseServerSearch(false);
-        loadAttendees();
+        void loadAttendees();
       }
     }, 500);
 
@@ -160,7 +163,7 @@ export const Attendees = () => {
           } else {
             toast.success(`成功導入 ${result.success} 筆參展者資料`);
           }
-          loadAttendees(); // 重新載入數據
+          void loadAttendees(); // 重新載入數據
         } else {
           toast.error(response.message || '批量導入失敗');
         }
@@ -455,14 +458,13 @@ export const Attendees = () => {
 
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end space-x-2">
-                        <a
-                          href={`/qrcodes/attendee/${attendee.id}`}
-                          download={`qrcode-${attendee.badgeNumber || attendee.name}.png`}
+                        <button
+                          onClick={() => setSelectedAttendeeForQR(attendee)}
                           className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-md transition-colors"
-                          title="下載QR碼"
+                          title="顯示QR碼"
                         >
                           <QrCode className="w-4 h-4" />
-                        </a>
+                        </button>
 
                         <Link
                           to={`/attendees/${attendee.id}/edit`}
@@ -488,6 +490,19 @@ export const Attendees = () => {
           </div>
         )}
       </div>
+
+      {/* QR Code 彈窗 */}
+      {selectedAttendeeForQR && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setSelectedAttendeeForQR(null)}>
+          <div className="max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
+            <AttendeeQRCode
+              attendeeId={selectedAttendeeForQR.id}
+              attendeeName={selectedAttendeeForQR.name}
+              onClose={() => setSelectedAttendeeForQR(null)}
+            />
+          </div>
+        </div>
+      )}
 
       {/* 分頁 */}
       {filteredAttendees.length > 0 && (

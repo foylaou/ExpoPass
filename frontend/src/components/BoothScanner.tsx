@@ -17,6 +17,8 @@ export const BoothScanner: React.FC<BoothScannerProps> = ({ onClose, onScanSucce
   const [scannerMode, setScannerMode] = useState<'camera' | 'manual'>('camera');
   const [result, setResult] = useState<{ success: boolean; message: string; data?: any } | null>(null);
   const [loading, setLoading] = useState(false);
+  const [lastScannedToken, setLastScannedToken] = useState<string>('');
+  const [lastScanTime, setLastScanTime] = useState<number>(0);
 
   // 掃描訪客 Token
   const handleScanToken = async (attendeeToken: string) => {
@@ -30,15 +32,27 @@ export const BoothScanner: React.FC<BoothScannerProps> = ({ onClose, onScanSucce
       return;
     }
 
+    // 防止重複掃描：如果是同一個 token 且在 3 秒內，則忽略
+    const now = Date.now();
+    if (lastScannedToken === attendeeToken.trim() && now - lastScanTime < 3000) {
+      console.log('忽略重複掃描');
+      return;
+    }
+
     setLoading(true);
     setResult(null);
 
     try {
-      // 獲取攤位 Token（從用戶 ID）
-      // 注意：這裡假設攤位的 token 存儲在用戶資料中，或者需要從 API 獲取
+      // 獲取攤位 Token（從用戶資料中的 qrCodeToken）
+      if (!user.qrCodeToken) {
+        toast.error('找不到攤位 QR Code Token，請重新登入');
+        setLoading(false);
+        return;
+      }
+
       const response = await scansServices.scanByToken({
         attendee_token: attendeeToken.trim(),
-        booth_token: user.id, // 使用攤位 ID 作為 token
+        booth_token: user.qrCodeToken, // 使用攤位的 qrCodeToken
       });
 
       if (response.success && response.data) {
@@ -50,6 +64,10 @@ export const BoothScanner: React.FC<BoothScannerProps> = ({ onClose, onScanSucce
         });
         toast.success(successMsg);
         setManualToken('');
+
+        // 記錄最後掃描的 token 和時間，用於防止重複掃描
+        setLastScannedToken(attendeeToken.trim());
+        setLastScanTime(Date.now());
 
         if (onScanSuccess) {
           onScanSuccess(response.data);

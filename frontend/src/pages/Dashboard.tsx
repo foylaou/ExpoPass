@@ -244,7 +244,9 @@ export const Dashboard: React.FC = () => {
                     />
                     <StatsCard
                         title="平均造訪次數"
-                        value={boothStats.overview.avg_visits_per_visitor.toFixed(1)}
+                        value={boothStats?.overview?.avg_visits_per_visitor != null
+                            ? boothStats.overview.avg_visits_per_visitor.toFixed(1)
+                            : '0.0'}
                         icon={Activity}
                         color="yellow"
                     />
@@ -314,7 +316,7 @@ export const Dashboard: React.FC = () => {
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">儀表板</h1>
                     <p className="text-gray-600">
-                        {stats ? `${stats.event.eventName} - 即時資訊` : '展覽即時資訊'}
+                        {stats ? `${stats.event.event_name} - 即時資訊` : '展覽即時資訊'}
                     </p>
                 </div>
 

@@ -16,7 +16,7 @@ import {
     Activity
 } from 'lucide-react';
 import { useAppStore } from '../../store';
-
+import { BoothQRCode } from '../../components/BoothQRCode';
 
 import {boothsServices} from "../../services/Booths/boothsServices.ts";
 import type {
@@ -38,6 +38,7 @@ export const BoothDetail = () => {
     const [hourlyStats, setHourlyStats] = useState<GetBoothHourlyStatsResponse[]>([]);
     const [repeatVisitors, setRepeatVisitors] = useState<GetBoothRepeatVisitorResponse[]>([]);
     const [activeTab, setActiveTab] = useState<'visitors' | 'daily' | 'hourly' | 'repeat'>('visitors');
+    const [showQRCode, setShowQRCode] = useState(false);
 
     useEffect(() => {
         if (id) {
@@ -138,9 +139,12 @@ export const BoothDetail = () => {
                 </div>
 
                 <div className="flex gap-3">
-                    <button className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors">
+                    <button 
+                        onClick={() => setShowQRCode(!showQRCode)}
+                        className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors"
+                    >
                         <QrCode className="w-4 h-4 mr-2" />
-                        QR Code
+                        {showQRCode ? '隱藏' : '顯示'} QR Code
                     </button>
                     <Link
                         to={`/booths/${id}/edit`}
@@ -151,6 +155,16 @@ export const BoothDetail = () => {
                     </Link>
                 </div>
             </div>
+
+            {/* QR Code 顯示區 */}
+            {showQRCode && (
+                <BoothQRCode
+                    boothId={booth.id}
+                    boothName={booth.boothName}
+                    boothNumber={booth.boothNumber}
+                    onClose={() => setShowQRCode(false)}
+                />
+            )}
 
             {/* 基本資訊卡片 */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">

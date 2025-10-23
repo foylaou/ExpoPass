@@ -20,6 +20,7 @@ export const AppDataSource = new DataSource({
     entities: [Event, Attendee, Booth, ScanRecord],
     migrations: ["src/migrations/*.ts"],
     subscribers: ["src/subscribers/*.ts"],
+    timezone: "Z", // 使用 UTC 時區
 });
 
 export const initializeDatabase = async () => {

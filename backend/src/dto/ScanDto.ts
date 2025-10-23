@@ -1,19 +1,42 @@
 // ============================================
 // 1. src/dto/ScanDto.ts
 // ============================================
-export interface CreateScanDto {
-    attendee_id: string;
-    booth_id: string;
-    event_id: string;
+import { IsString, IsOptional, IsNotEmpty } from 'class-validator';
+
+export class CreateScanDto {
+    @IsString()
+    @IsNotEmpty()
+    attendee_id!: string;
+
+    @IsString()
+    @IsNotEmpty()
+    booth_id!: string;
+
+    @IsString()
+    @IsNotEmpty()
+    event_id!: string;
+
+    @IsString()
+    @IsOptional()
     notes?: string;
 }
 
-export interface ScanByTokenDto {
-    attendee_token: string;
-    booth_token: string;
+export class ScanByTokenDto {
+    @IsString()
+    @IsNotEmpty()
+    attendee_token!: string;
+
+    @IsString()
+    @IsNotEmpty()
+    booth_token!: string;
+
+    @IsString()
+    @IsOptional()
     notes?: string;
 }
 
-export interface UpdateScanDto {
+export class UpdateScanDto {
+    @IsString()
+    @IsOptional()
     notes?: string;
 }

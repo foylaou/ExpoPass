@@ -506,12 +506,26 @@ export class DashboardService {
 
     /**
      * 計算時間差（多久之前）
+     * 注意：TypeORM 讀取 timestamp 時會被視為本地時間，需要調整為 UTC
      */
     private getTimeAgo(date: Date): string {
+        // TypeORM 讀取的時間被視為本地時間，需要轉換為 UTC
+        const scanDate = new Date(date);
+        // 獲取時區偏移（分鐘）- 負值表示東時區，正值表示西時區
+        // UTC+8 的 timezoneOffset = -480
+        const timezoneOffset = scanDate.getTimezoneOffset();
+        // 調整為 UTC 時間（減去時區偏移，因為 offset 是負值，所以實際是加上 8 小時）
+        const scanDateUTC = new Date(scanDate.getTime() - timezoneOffset * 60 * 1000);
+        
+        // 獲取當前 UTC 時間
         const now = new Date();
-        const diffInSeconds = Math.floor((now.getTime() - new Date(date).getTime()) / 1000);
+        
+        // 計算時間差（秒）
+        const diffInSeconds = Math.floor((now.getTime() - scanDateUTC.getTime()) / 1000);
 
-        if (diffInSeconds < 60) {
+        if (diffInSeconds < 0) {
+            return '剛剛';
+        } else if (diffInSeconds < 60) {
             return `${diffInSeconds} 秒前`;
         } else if (diffInSeconds < 3600) {
             return `${Math.floor(diffInSeconds / 60)} 分鐘前`;

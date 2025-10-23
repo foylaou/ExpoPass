@@ -19,6 +19,7 @@ import {
     FileSpreadsheet
 } from 'lucide-react';
 import { useAppStore } from '../../store';
+import { BoothQRCode } from '../../components/BoothQRCode';
 
 import { importServices, exportServices, downloadFile } from '../../services/Import-Export/import-exportServices.ts';
 import {boothsServices} from "../../services/Booths/boothsServices.ts";
@@ -31,6 +32,7 @@ export const BoothsPage = () => {
     const [locationFilter, setLocationFilter] = useState('');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [showImportModal, setShowImportModal] = useState(false);
+    const [selectedBoothForQR, setSelectedBoothForQR] = useState<Booths | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
 
@@ -409,6 +411,7 @@ export const BoothsPage = () => {
                                             <Eye className="w-4 h-4" />
                                         </Link>
                                         <button
+                                            onClick={() => setSelectedBoothForQR(booth)}
                                             className="p-1 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded"
                                             title="QR碼"
                                         >
@@ -537,6 +540,7 @@ export const BoothsPage = () => {
                                             </Link>
 
                                             <button
+                                                onClick={() => setSelectedBoothForQR(booth)}
                                                 className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-md transition-colors"
                                                 title="生成QRCode"
                                             >
@@ -605,6 +609,20 @@ export const BoothsPage = () => {
                             新增攤位
                         </Link>
                     )}
+                </div>
+            )}
+
+            {/* QR Code 彈窗 */}
+            {selectedBoothForQR && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setSelectedBoothForQR(null)}>
+                    <div className="max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
+                        <BoothQRCode
+                            boothId={selectedBoothForQR.id}
+                            boothName={selectedBoothForQR.boothName}
+                            boothNumber={selectedBoothForQR.boothNumber}
+                            onClose={() => setSelectedBoothForQR(null)}
+                        />
+                    </div>
                 </div>
             )}
 
