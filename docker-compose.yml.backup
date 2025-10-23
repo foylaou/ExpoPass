@@ -60,7 +60,7 @@ services:
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8080}
 
       # Admin accounts
-      ADMIN_ACCOUNTS: '[{"username":"foy","password":"$$argon2id$$v=19$$m=65536,t=3,p=4$$W468wqUENy8EbdefA8xr5Q$$CUoh44SLdaLgCMU2r78shMffEQj70oPEDyhD8gPDPDM","email":"s225002731@gmail.com","role":"super_admin"},{"username":"admin","password":"$$argon2id$$v=19$$m=65536,t=3,p=4$$H4pDwBny6IF6BXmM4B4uhw$$EJESTP3F7OP8CylIsDG4KqWyKvZPtNOJLjUbtbY30Wo","email":"isha@mail.isha.org.tw","role":"admin"}]'
+      ADMIN_ACCOUNTS: ${ADMIN_ACCOUNTS:-[]}
     networks:
       - expopass-network
     healthcheck:
