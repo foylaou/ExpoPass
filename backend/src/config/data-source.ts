@@ -20,7 +20,7 @@ export const AppDataSource = new DataSource({
     entities: [Event, Attendee, Booth, ScanRecord],
     migrations: ["src/migrations/*.ts"],
     subscribers: ["src/subscribers/*.ts"],
-    timezone: "Z", // 使用 UTC 時區
+
 });
 
 export const initializeDatabase = async () => {
@@ -34,7 +34,7 @@ export const initializeDatabase = async () => {
 
         // 設定 TypeORM 使用 TypeDI 容器
         useContainer(Container);
-        
+
         await AppDataSource.initialize();
         console.log('✅ Database connection established successfully');
         console.log('📄 Using existing database schema (synchronize: false)');
