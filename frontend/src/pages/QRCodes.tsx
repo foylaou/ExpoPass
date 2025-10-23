@@ -158,11 +158,18 @@ export const QRCodes = () => {
       }
 
       if (result instanceof Blob) {
+        // 找到對應的 QR Code item 以獲取完整資訊
+        const item = qrCodes.find(qr => qr.id === id);
+        const typeLabel = type === 'attendee' ? '參展者' : '攤位';
+        const company = item?.company || '未知公司';
+        const name = item?.name || '未知姓名';
+        const identifier = item?.identifier || id.substring(0, 8);
+        
         // 創建下載鏈接
         const url = URL.createObjectURL(result);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `qrcode_${type}_${id}.png`;
+        link.download = `${typeLabel}_${company}_${name}_${identifier}.png`;
         link.click();
         URL.revokeObjectURL(url);
         toast.success('QR碼下載成功！');
@@ -233,10 +240,15 @@ export const QRCodes = () => {
 
   // 下載QR碼
   const downloadQRCode = (item: QRCodeItem) => {
+    const typeLabel = item.type === 'attendee' ? '參展者' : '攤位';
+    const company = item.company || '未知公司';
+    const name = item.name || '未知姓名';
+    const identifier = item.identifier || item.id.substring(0, 8);
+    
     // 創建下載鏈接
     const link = document.createElement('a');
     link.href = item.qrCodeUrl;
-    link.download = `qrcode_${item.type}_${item.identifier}.png`;
+    link.download = `${typeLabel}_${company}_${name}_${identifier}.png`;
     link.click();
   };
 
@@ -250,9 +262,14 @@ export const QRCodes = () => {
     const selectedQRCodes = qrCodes.filter(item => selectedItems.includes(item.id));
     selectedQRCodes.forEach((item, index) => {
       setTimeout(() => {
+        const typeLabel = item.type === 'attendee' ? '參展者' : '攤位';
+        const company = item.company || '未知公司';
+        const name = item.name || '未知姓名';
+        const identifier = item.identifier || item.id.substring(0, 8);
+        
         const link = document.createElement('a');
         link.href = item.qrCodeUrl;
-        link.download = `qrcode_${item.type}_${item.identifier}.png`;
+        link.download = `${typeLabel}_${company}_${name}_${identifier}.png`;
         link.click();
       }, index * 200); // 延遲下載避免瀏覽器阻擋
     });
@@ -286,6 +303,187 @@ export const QRCodes = () => {
       </html>
     `);
     printWindow?.print();
+  };
+
+  // 批量列印QR碼
+  const batchPrintQRCodes = () => {
+    if (selectedItems.length === 0) {
+      toast.error('請選擇要列印的QR碼');
+      return;
+    }
+
+    const selectedQRCodes = qrCodes.filter(item => selectedItems.includes(item.id));
+    const printWindow = window.open('', '_blank');
+    
+    if (!printWindow) {
+      toast.error('無法開啟列印視窗');
+      return;
+    }
+
+    // 生成HTML內容
+    let htmlContent = `
+      <html lang="Zh-TW">
+        <head>
+          <title>批量列印 QR Codes</title>
+          <style>
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            
+            @page {
+              size: A4;
+              margin: 0;
+            }
+            
+            body {
+              font-family: 'Microsoft JhengHei', Arial, sans-serif;
+              width: 21cm;
+              margin: 0 auto;
+            }
+            
+            .page {
+              width: 21cm;
+              height: 29.7cm;
+              page-break-after: always;
+              display: flex;
+              flex-wrap: wrap;
+              align-content: flex-start;
+              padding: 0.85cm 2.5cm;
+            }
+            
+            .page:last-child {
+              page-break-after: auto;
+            }
+            
+            .qr-card {
+              width: 8cm;
+              height: 8cm;
+              border: 1px dashed #999;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              padding: 0.5cm;
+              position: relative;
+            }
+            
+            .qr-card::after {
+              content: '✂';
+              position: absolute;
+              top: -0.3cm;
+              right: -0.3cm;
+              font-size: 14px;
+              color: #999;
+            }
+            
+            .qr-code-img {
+              width: 5cm;
+              height: 5cm;
+              object-fit: contain;
+              margin-bottom: 0.3cm;
+            }
+            
+            .qr-info {
+              text-align: center;
+              width: 100%;
+            }
+            
+            .qr-name {
+              font-size: 14px;
+              font-weight: bold;
+              margin-bottom: 2px;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+            }
+            
+            .qr-company {
+              font-size: 11px;
+              color: #666;
+              margin-bottom: 2px;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+            }
+            
+            .qr-identifier {
+              font-size: 10px;
+              color: #999;
+            }
+            
+            .qr-type {
+              position: absolute;
+              top: 0.2cm;
+              left: 0.2cm;
+              font-size: 9px;
+              padding: 2px 6px;
+              border-radius: 3px;
+              background: #f0f0f0;
+              color: #666;
+            }
+            
+            @media print {
+              body {
+                width: 21cm;
+              }
+              
+              .qr-card {
+                page-break-inside: avoid;
+              }
+            }
+          </style>
+        </head>
+        <body>
+    `;
+
+    // 每頁6個QR碼 (2列 x 3行)
+    const itemsPerPage = 6;
+    const totalPages = Math.ceil(selectedQRCodes.length / itemsPerPage);
+
+    for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
+      htmlContent += '<div class="page">';
+      
+      const startIndex = pageIndex * itemsPerPage;
+      const endIndex = Math.min(startIndex + itemsPerPage, selectedQRCodes.length);
+      
+      for (let i = startIndex; i < endIndex; i++) {
+        const item = selectedQRCodes[i];
+        const typeLabel = item.type === 'attendee' ? '參展者' : '攤位';
+        
+        htmlContent += `
+          <div class="qr-card">
+            <span class="qr-type">${typeLabel}</span>
+            <img src="${item.qrCodeUrl}" alt="QR Code" class="qr-code-img" />
+            <div class="qr-info">
+              <div class="qr-name">${item.name}</div>
+              ${item.company ? `<div class="qr-company">${item.company}</div>` : ''}
+              <div class="qr-identifier">${item.type === 'attendee' ? '名牌號' : '攤位號'}: ${item.identifier}</div>
+            </div>
+          </div>
+        `;
+      }
+      
+      htmlContent += '</div>';
+    }
+
+    htmlContent += `
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+    
+    // 等待圖片載入後再列印
+    printWindow.onload = () => {
+      setTimeout(() => {
+        printWindow.print();
+      }, 500);
+    };
+    
+    toast.success(`準備列印 ${selectedQRCodes.length} 個QR碼`);
   };
 
   // 預覽名牌資料
@@ -412,6 +610,15 @@ export const QRCodes = () => {
           >
             <Download className="w-4 h-4 mr-2" />
             批量下載
+          </button>
+
+          <button
+            onClick={batchPrintQRCodes}
+            disabled={selectedItems.length === 0}
+            className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            <Printer className="w-4 h-4 mr-2" />
+            批量列印 ({selectedItems.length})
           </button>
 
           <button
