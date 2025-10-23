@@ -6,7 +6,7 @@ services:
   # ============================================
   postgres:
     image: postgres:14-alpine
-    container_name: expopass-postgres
+    container_name: postgres
     restart: unless-stopped
     env_file:
       - .env
@@ -18,8 +18,6 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
-    ports:
-      - "5432:5432"
     networks:
       - expopass-network
     healthcheck:
@@ -63,12 +61,10 @@ services:
 
       # Admin accounts
       ADMIN_ACCOUNTS: ${ADMIN_ACCOUNTS:-[]}
-    ports:
-      - "3000:3000"
     networks:
       - expopass-network
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -88,12 +84,10 @@ services:
         condition: service_healthy
     env_file:
       - .env
-    ports:
-      - "8080:80"
     networks:
       - expopass-network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/"]
+      test: ["CMD", "sh", "-c", "curl -f http://127.0.0.1/ || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -112,3 +106,4 @@ networks:
 volumes:
   postgres_data:
     driver: local
+

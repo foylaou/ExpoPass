@@ -1,7 +1,7 @@
 import { Service } from 'typedi';
 import { Repository } from 'typeorm';
 import QRCode from 'qrcode';
-import * as archiver from 'archiver';
+import archiver from 'archiver';
 import { Booth , Attendee} from '../entities';
 import { AppDataSource } from '../config/data-source';
 import { Response } from 'express';

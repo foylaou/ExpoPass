@@ -3,5 +3,7 @@ packages:
   - backend
 
 ignoredBuiltDependencies:
+  - '@scarf/scarf'
   - '@tailwindcss/oxide'
   - argon2
+  - esbuild
