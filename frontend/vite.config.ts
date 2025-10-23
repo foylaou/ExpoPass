@@ -5,18 +5,15 @@ import tailwindcss from '@tailwindcss/vite'
 import Sitemap from 'vite-plugin-sitemap'
 import { createHtmlPlugin } from 'vite-plugin-html'
 
-
-
 // https://vite.dev/config/
 export default defineConfig({
     server: {
-        allowedHosts: ["01296ddfa1e9.ngrok-free.app"], // ✅ 明確寫出完整主機名稱
+        allowedHosts: ["01296ddfa1e9.ngrok-free.app"],
         proxy: {
             '/api': {
                 target: 'http://localhost:3000',
                 changeOrigin: true,
                 secure: false,
-                // 不要移除 /api 前綴，讓後端處理完整路徑
             },
             '/qrcodes': {
                 target: 'http://localhost:3000',
@@ -53,6 +50,50 @@ export default defineConfig({
             workbox: {
                 clientsClaim: true,
                 skipWaiting: true,
+                cleanupOutdatedCaches: true,
+                runtimeCaching: [
+                    {
+                        urlPattern: /^https:\/\/expopass\.isafe\.org\.tw\/api\/.*/i,
+                        handler: 'NetworkFirst',
+                        options: {
+                            cacheName: 'api-cache',
+                            expiration: {
+                                maxEntries: 50,
+                                maxAgeSeconds: 300, // 5 minutes
+                            },
+                            networkTimeoutSeconds: 10,
+                        },
+                    },
+                    {
+                        urlPattern: /^https:\/\/expopass\.isafe\.org\.tw\/assets\/.*/i,
+                        handler: 'StaleWhileRevalidate',
+                        options: {
+                            cacheName: 'assets-cache',
+                            expiration: {
+                                maxEntries: 100,
+                                maxAgeSeconds: 86400, // 24 hours
+                            },
+                        },
+                    },
+                ],
+            },
+            manifest: {
+                name: 'ExpoPass 展覽管理系統',
+                short_name: 'ExpoPass',
+                description: '現代化的展覽活動管理系統',
+                theme_color: '#ffffff',
+                icons: [
+                    {
+                        src: '/pwa-192x192.png',
+                        sizes: '192x192',
+                        type: 'image/png'
+                    },
+                    {
+                        src: '/pwa-512x512.png',
+                        sizes: '512x512',
+                        type: 'image/png'
+                    }
+                ]
             },
             devOptions: {
                 enabled: true,
