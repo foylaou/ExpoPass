@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import {useState, useEffect, useCallback, useMemo} from 'react';
 import { Link } from 'react-router-dom';
 import {
   Plus,
@@ -32,189 +32,189 @@ export const Attendees = () => {
 
 
   // 獲取參展者列表
-  const loadAttendees = async () => {
-    try {
-      setLoading(true);
+    const loadAttendees = useCallback(async () => {
+        try {
+            setLoading(true);
 
-      if (currentEvent) {
-        const response = await attendeesServices.GetAllAttendees({ eventId: currentEvent.id });
-        if (response.success && response.data) {
-          setAttendees(response.data.attendees || []);
-        } else {
-            toast.error(response.message|| '獲取參展者列表失敗')
-          throw new Error(response.message || '獲取參展者列表失敗');
+            if (currentEvent) {
+                const response = await attendeesServices.GetAllAttendees({ eventId: currentEvent.id });
+                if (response.success && response.data) {
+                    setAttendees(response.data.attendees || []);
+                } else {
+                    toast.error(response.message || '獲取參展者列表失敗');
+                    throw new Error(response.message || '獲取參展者列表失敗');
+                }
+            } else {
+                setAttendees([]);
+            }
+        } catch (error) {
+            console.error('Failed to load attendees:', error);
+            setAttendees([]);
+        } finally {
+            setLoading(false);
         }
-      } else {
-        // 沒有選擇展覽時設為空陣列
-        setAttendees([]);
-      }
-    } catch (error) {
-      console.error('Failed to load attendees:', error);
-      setAttendees([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+    }, [currentEvent, setLoading]); // 加入所有依賴項
 
   useEffect(() => {
     void loadAttendees();
-  }, [currentEvent]);
+  }, [loadAttendees]);
 
   // 搜尋功能：使用後端API搜尋
-  useEffect(() => {
-    const searchAttendees = async () => {
-      if (!searchQuery.trim() || !currentEvent) {
-        setUseServerSearch(false);
-        return;
-      }
+    useEffect(() => {
+        const searchAttendees = async () => {
+            if (!searchQuery.trim() || !currentEvent) {
+                setUseServerSearch(false);
+                return;
+            }
 
-      try {
-        setLoading(true);
-        setUseServerSearch(true);
-        const response = await attendeesServices.GetSearchAttendee({
-          eventId: currentEvent.id,
-          keywords: searchQuery
-        });
-        if (response.success && response.data) {
-          setAttendees(response.data.attendees || []);
-        }
-      } catch (error) {
-        console.error('Failed to search attendees:', error);
-        toast.error('搜尋失敗');
-      } finally {
-        setLoading(false);
-      }
-    };
+            try {
+                setLoading(true);
+                setUseServerSearch(true);
+                const response = await attendeesServices.GetSearchAttendee({
+                    eventId: currentEvent.id,
+                    keywords: searchQuery
+                });
+                if (response.success && response.data) {
+                    setAttendees(response.data.attendees || []);
+                }
+            } catch (error) {
+                console.error('Failed to search attendees:', error);
+                toast.error('搜尋失敗');
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    // 防抖處理
-    const timeoutId = setTimeout(() => {
-      if (searchQuery.trim()) {
-        void searchAttendees();
-      } else {
-        setUseServerSearch(false);
-        void loadAttendees();
-      }
-    }, 500);
+        // 防抖處理
+        const timeoutId = setTimeout(() => {
+            if (searchQuery.trim()) {
+                void searchAttendees();
+            } else {
+                setUseServerSearch(false);
+                void loadAttendees();
+            }
+        }, 500);
 
-    return () => clearTimeout(timeoutId);
-  }, [searchQuery]);
+        return () => clearTimeout(timeoutId);
+    }, [searchQuery, currentEvent, setLoading, loadAttendees]); // 加入所有依賴項
 
 
   // 篩選參展者（僅針對公司過濾）
-  const filteredAttendees = attendees.filter(attendee => {
-    const matchesCompany = !companyFilter || attendee.company === companyFilter;
-    return matchesCompany;
-  });
+    const filteredAttendees = useMemo(() => {
+        return attendees.filter(attendee => {
+            const matchesCompany = !companyFilter || attendee.company === companyFilter;
+            return matchesCompany;
+        });
+    }, [attendees, companyFilter]);
 
   // 獲取所有公司列表
-  const companies = Array.from(new Set(attendees.map(a => a.company).filter(Boolean)));
-
+    const companies = useMemo(() => {
+        return Array.from(new Set(attendees.map(a => a.company).filter(Boolean)));
+    }, [attendees]);
   // 刪除參展者
-  const handleDelete = async (id: string) => {
-    if (window.confirm('確定要刪除此參展者嗎？')) {
-      try {
-        setLoading(true);
-        const response = await attendeesServices.DeleteAttendee(id);
-        if (response.success) {
-          setAttendees(attendees.filter(a => a.id !== id));
-          toast.success('刪除成功');
-        } else {
-          toast.error(response.message || '刪除失敗');
+    const handleDelete = useCallback(async (id: string) => {
+        if (window.confirm('確定要刪除此參展者嗎？')) {
+            try {
+                setLoading(true);
+                const response = await attendeesServices.DeleteAttendee(id);
+                if (response.success) {
+                    setAttendees(prev => prev.filter(a => a.id !== id));
+                    toast.success('刪除成功');
+                } else {
+                    toast.error(response.message || '刪除失敗');
+                }
+            } catch (error) {
+                console.error('Failed to delete attendee:', error);
+                toast.error('刪除參展者時發生錯誤');
+            } finally {
+                setLoading(false);
+            }
         }
-      } catch (error) {
-        console.error('Failed to delete attendee:', error);
-        toast.error('刪除參展者時發生錯誤');
-      } finally {
-        setLoading(false);
-      }
-    }
-  };
+    }, [setLoading]);
 
   // 批量導入
-  const handleImport = () => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.xlsx,.xls,.csv';
-    input.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (!file) return;
+    const handleImport = useCallback(() => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.xlsx,.xls,.csv';
+        input.onchange = async (e) => {
+            const file = (e.target as HTMLInputElement).files?.[0];
+            if (!file) return;
 
-      if (!currentEvent) {
-        toast.error('請先選擇活動');
-        return;
-      }
+            if (!currentEvent) {
+                toast.error('請先選擇活動');
+                return;
+            }
 
-      try {
-        setLoading(true);
-        const response = await importServices.importAttendees({
-          eventId: currentEvent.id,
-          file: file
-        });
+            try {
+                setLoading(true);
+                const response = await importServices.importAttendees({
+                    eventId: currentEvent.id,
+                    file: file
+                });
 
-        if (response.success && response.data) {
-          const result = response.data;
-          if (result.failed > 0 && result.errors) {
-            // 有錯誤時顯示詳細資訊
-            toast.success(
-              `導入完成：成功 ${result.success} 筆，失敗 ${result.failed} 筆`,
-              { duration: 5000 }
-            );
-            console.warn('匯入錯誤:', result.errors);
-          } else {
-            toast.success(`成功導入 ${result.success} 筆參展者資料`);
-          }
-          void loadAttendees(); // 重新載入數據
-        } else {
-          toast.error(response.message || '批量導入失敗');
-        }
-      } catch (error) {
-        console.error('Failed to import attendees:', error);
-        toast.error('導入檔案時發生錯誤');
-      } finally {
-        setLoading(false);
-      }
-    };
-    input.click();
-  };
-
+                if (response.success && response.data) {
+                    const result = response.data;
+                    if (result.failed > 0 && result.errors) {
+                        toast.success(
+                            `導入完成：成功 ${result.success} 筆，失敗 ${result.failed} 筆`,
+                            { duration: 5000 }
+                        );
+                        console.warn('匯入錯誤:', result.errors);
+                    } else {
+                        toast.success(`成功導入 ${result.success} 筆參展者資料`);
+                    }
+                    void loadAttendees();
+                } else {
+                    toast.error(response.message || '批量導入失敗');
+                }
+            } catch (error) {
+                console.error('Failed to import attendees:', error);
+                toast.error('導入檔案時發生錯誤');
+            } finally {
+                setLoading(false);
+            }
+        };
+        input.click();
+    }, [currentEvent, setLoading, loadAttendees]);
   // 下載匯入範本
-  const handleDownloadTemplate = async () => {
-    try {
-      setLoading(true);
-      const blob = await exportServices.getImportTemplate({ type: 'attendees' });
-      downloadFile(blob, 'attendees_template.xlsx');
-      toast.success('範本下載成功');
-    } catch (error) {
-      console.error('Failed to download template:', error);
-      toast.error('下載範本失敗');
-    } finally {
-      setLoading(false);
-    }
-  };
+    const handleDownloadTemplate = useCallback(async () => {
+        try {
+            setLoading(true);
+            const blob = await exportServices.getImportTemplate({ type: 'attendees' });
+            downloadFile(blob, 'attendees_template.xlsx');
+            toast.success('範本下載成功');
+        } catch (error) {
+            console.error('Failed to download template:', error);
+            toast.error('下載範本失敗');
+        } finally {
+            setLoading(false);
+        }
+    }, [setLoading]);
 
+    const handleExport = useCallback(async () => {
+        if (!currentEvent) {
+            toast.error('請先選擇活動');
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const blob = await exportServices.exportAttendees({
+                eventId: currentEvent.id,
+                format: 'xlsx'
+            });
+            const filename = `attendees_${currentEvent.eventName}_${new Date().toISOString().split('T')[0]}.xlsx`;
+            downloadFile(blob, filename);
+            toast.success('匯出成功');
+        } catch (error) {
+            console.error('Failed to export attendees:', error);
+            toast.error('匯出失敗');
+        } finally {
+            setLoading(false);
+        }
+    }, [currentEvent, setLoading]);
   // 導出數據
-  const handleExport = async () => {
-    if (!currentEvent) {
-      toast.error('請先選擇活動');
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const blob = await exportServices.exportAttendees({
-        eventId: currentEvent.id,
-        format: 'xlsx'
-      });
-      const filename = `attendees_${currentEvent.eventName}_${new Date().toISOString().split('T')[0]}.xlsx`;
-      downloadFile(blob, filename);
-      toast.success('匯出成功');
-    } catch (error) {
-      console.error('Failed to export attendees:', error);
-      toast.error('匯出失敗');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (loading) {
     return (
