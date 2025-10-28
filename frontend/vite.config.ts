@@ -8,7 +8,7 @@ import { createHtmlPlugin } from 'vite-plugin-html'
 // https://vite.dev/config/
 export default defineConfig({
     server: {
-        allowedHosts: ["01296ddfa1e9.ngrok-free.app"],
+        allowedHosts: ["85508fa77cfb.ngrok-free.app"],
         proxy: {
             '/api': {
                 target: 'http://localhost:3000',
